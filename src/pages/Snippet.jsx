@@ -13,7 +13,7 @@ const Snippet = () => {
         const fetchSnippets = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:5000/api/snippets', {
+                const response = await axios.get('http://localhost:5001/api/snippets', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming a token-based authentication
                     },
@@ -33,7 +33,7 @@ const Snippet = () => {
     const deleteSnippet = async (snippetId) => {
         try {
             const response = await axios.post(
-                'http://localhost:5000/api/snippets/delete',
+                'http://localhost:5001/api/snippets/delete',
                 { snippetId },
                 {
                     headers: {

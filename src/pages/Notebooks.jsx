@@ -18,7 +18,7 @@ const Notebooks = () => {
 
   const fetchNotebooks = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notebooks/', {
+      const response = await axios.get('http://localhost:5001/api/notebooks/', {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -33,7 +33,7 @@ const Notebooks = () => {
     if (!newNotebookName.trim()) return alert('Notebook name is required');
     try {
       await axios.post(
-        'http://localhost:5000/api/notebooks/create',
+        'http://localhost:5001/api/notebooks/create',
         { name: newNotebookName },
         {
           headers: {
@@ -52,7 +52,7 @@ const Notebooks = () => {
   const deleteNotebook = async (notebookId) => {
     try {
       await axios.post(
-        'http://localhost:5000/api/notebooks/delete',
+        'http://localhost:5001/api/notebooks/delete',
         { notebookId },
         {
           headers: {
@@ -76,7 +76,7 @@ const Notebooks = () => {
       return alert('Please fill out all fields to create a QA');
     try {
       await axios.post(
-        'http://localhost:5000/api/qa/createQA',
+        'http://localhost:5001/api/qa/createQA',
         { ...newQA, nbid: selectedNotebookId },
         {
           headers: {
@@ -95,7 +95,7 @@ const Notebooks = () => {
   const deleteQA = async (qaId) => {
     try {
       await axios.post(
-        'http://localhost:5000/api/qa/deleteQA',
+        'http://localhost:5001/api/qa/deleteQA',
         { qaId },
         {
           headers: {

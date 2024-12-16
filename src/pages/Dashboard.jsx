@@ -27,7 +27,7 @@ function Dashboard() {
   const fetchNotebooks = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/notebooks", {
+      const response = await axios.get("http://localhost:5001/api/notebooks", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,7 +42,7 @@ function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/code/run",
+        "http://localhost:5001/api/code/run",
         { language, code, input: userInput },
         {
           headers: {
@@ -59,7 +59,7 @@ function Dashboard() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/logout");
+      await axios.post("http://localhost:5001/api/auth/logout");
       localStorage.removeItem("token");
       navigate("/");
     } catch (error) {
@@ -74,7 +74,7 @@ function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/snippets/create",
+        "http://localhost:5001/api/snippets/create",
         { name: snippetName, code, language },
         {
           headers: {
@@ -100,8 +100,8 @@ function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/qa/createQA",
-        { question, code, language, notebookId: selectedNotebook },
+        "http://localhost:5001/api/qa/createQA",
+        { question, code, language, nbid: selectedNotebook },
         {
           headers: {
             Authorization: `Bearer ${token}`,

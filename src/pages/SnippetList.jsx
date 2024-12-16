@@ -9,7 +9,7 @@ function SnippetList() {
   const fetchSnippets = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/snippets", {
+      const response = await axios.get("http://localhost:5001/api/snippets", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -24,7 +24,7 @@ function SnippetList() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/snippets/create",
+        "http://localhost:5001/api/snippets/create",
         { name, code },
         {
           headers: {
