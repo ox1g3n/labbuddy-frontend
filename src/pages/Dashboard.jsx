@@ -1,32 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Editor from "@monaco-editor/react";
-import SnippetList from "./SnippetList"; // Component to list snippets
 
 function Dashboard() {
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState("");
-  const [userInput, setUserInput] = useState(""); // State for user input
+  const [userInput, setUserInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [showSnippetModal, setShowSnippetModal] = useState(false);
-  const [snippetName, setSnippetName] = useState(""); // Name for saving snippet
+  const [showNotebookModal, setShowNotebookModal] = useState(false);
+  const [snippetName, setSnippetName] = useState("");
+  const [question, setQuestion] = useState(""); // Question for the QA
+  const [notebooks, setNotebooks] = useState([]); // List of notebooks
+  const [selectedNotebook, setSelectedNotebook] = useState(""); // Selected notebook
   const navigate = useNavigate();
+
+  // Fetch notebooks on component mount or when the modal opens
+  useEffect(() => {
+    if (showNotebookModal) {
+      fetchNotebooks();
+    }
+  }, [showNotebookModal]);
+
+  const fetchNotebooks = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("http://localhost:5000/api/notebooks", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setNotebooks(response.data.notebooks || []);
+    } catch (error) {
+      console.error("Error fetching notebooks:", error.response?.data?.message || error.message);
+    }
+  };
 
   const handleRun = async () => {
     try {
-      const token = localStorage.getItem("token"); // Retrieve token from localStorage
+      const token = localStorage.getItem("token");
       const response = await axios.post(
         "http://localhost:5000/api/code/run",
-        { language, code, input: userInput }, // Include user input in request body
+        { language, code, input: userInput },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Attach token in headers
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      setOutput(response.data.output); // Update output
+      setOutput(response.data.output);
     } catch (error) {
       console.error(error.response?.data?.message || "Error running code");
       setOutput(error.response?.data?.message || "Something went wrong");
@@ -35,9 +59,9 @@ function Dashboard() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/logout"); // Call logout API
-      localStorage.removeItem("token"); // Clear token from localStorage
-      navigate("/"); // Redirect to login page
+      await axios.post("http://localhost:5000/api/auth/logout");
+      localStorage.removeItem("token");
+      navigate("/");
     } catch (error) {
       console.error(
         "Error logging out:",
@@ -58,12 +82,39 @@ function Dashboard() {
           },
         }
       );
-      setShowSnippetModal(false); // Close modal
-      setSnippetName(""); // Reset snippet name
+      setShowSnippetModal(false);
+      setSnippetName("");
       alert("Snippet saved successfully!");
     } catch (error) {
       console.error("Error saving snippet:", error.response?.data?.message || error.message);
       alert("Failed to save snippet. Please try again.");
+    }
+  };
+
+  const handleSaveQA = async () => {
+    if (!selectedNotebook || !question.trim()) {
+      alert("Please fill in all fields and select a notebook.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        "http://localhost:5000/api/qa/createQA",
+        { question, code, language, notebookId: selectedNotebook },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setShowNotebookModal(false);
+      setQuestion("");
+      setSelectedNotebook("");
+      alert("QA saved successfully!");
+    } catch (error) {
+      console.error("Error saving QA:", error.response?.data?.message || error.message);
+      alert("Failed to save QA. Please try again.");
     }
   };
 
@@ -76,19 +127,21 @@ function Dashboard() {
           <ul>
             <li
               className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-              onClick={() => navigate("/snippets")} // Navigate to snippets page
+              onClick={() => navigate("/snippets")}
             >
               Snippets
             </li>
-            <li className="px-4 py-2 hover:bg-gray-700 cursor-pointer">
-              Tab 2
+            <li
+              className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+              onClick={() => navigate("/notebooks")}
+            >
+              Notebooks
             </li>
             <li className="px-4 py-2 hover:bg-gray-700 cursor-pointer">
-              Tab 3
+              Suggestions
             </li>
           </ul>
         </div>
-        {/* Logout Button */}
         <button
           onClick={handleLogout}
           className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 m-4 rounded self-start"
@@ -99,7 +152,6 @@ function Dashboard() {
 
       {/* Main Area */}
       <div className="w-4/5 flex flex-col">
-        {/* Code Editor */}
         <Editor
           height="60%"
           language={language}
@@ -109,7 +161,6 @@ function Dashboard() {
           className="border-b"
         />
 
-        {/* Input Area */}
         <div className="p-4">
           <label className="block mb-2 font-semibold">Input (Optional):</label>
           <textarea
@@ -120,7 +171,6 @@ function Dashboard() {
           ></textarea>
         </div>
 
-        {/* Controls */}
         <div className="p-4 flex justify-between">
           <div>
             <label className="mr-2">Language:</label>
@@ -154,26 +204,24 @@ function Dashboard() {
             </button>
             <button
               className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
-              onClick={() => setShowSnippetModal(true)}
+              onClick={() => setShowNotebookModal(true)}
             >
               Save in Notebook
             </button>
           </div>
         </div>
 
-        {/* Output Area */}
         <div className="p-4 bg-gray-100 border-t">
           <h3 className="font-bold">Output:</h3>
           <pre
             className="bg-white p-2 mt-2 border rounded overflow-auto whitespace-pre-wrap break-words"
-            style={{ maxHeight: "200px" }} // Optional: Add a maximum height if needed
+            style={{ maxHeight: "200px" }}
           >
             {output || error}
           </pre>
         </div>
       </div>
-
-      {/* Snippet Modal */}
+      {/*snippet modal*/}
       {showSnippetModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded shadow-lg w-1/3">
@@ -200,6 +248,52 @@ function Dashboard() {
               <button
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 onClick={handleSnippetSave}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )} 
+      {/* Notebook Modal */}
+      {showNotebookModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-1/3">
+            <h2 className="text-xl font-bold mb-4">Save QA to Notebook</h2>
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Enter your question"
+              className="w-full p-2 border rounded mb-4"
+            />
+            <select
+              value={selectedNotebook}
+              onChange={(e) => setSelectedNotebook(e.target.value)}
+              className="w-full p-2 border rounded mb-4"
+            >
+              <option value="">Select Notebook</option>
+              {notebooks.map((notebook) => (
+                <option key={notebook._id} value={notebook._id}>
+                  {notebook.name}
+                </option>
+              ))}
+            </select>
+            <textarea
+              value={code}
+              readOnly
+              className="w-full p-2 border rounded h-32 mb-4"
+            ></textarea>
+            <div className="flex justify-end">
+              <button
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+                onClick={() => setShowNotebookModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={handleSaveQA}
               >
                 Save
               </button>

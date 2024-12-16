@@ -4,6 +4,8 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Snippet from "./pages/Snippet.jsx";
+import Notebooks from "./pages/Notebooks.jsx";
 
 const App = () => {
   return (
@@ -16,6 +18,22 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/snippets"
+          element={
+            <ProtectedRoute>
+              <Snippet />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notebooks"
+          element={
+            <ProtectedRoute>
+              <Notebooks />
             </ProtectedRoute>
           }
         />
