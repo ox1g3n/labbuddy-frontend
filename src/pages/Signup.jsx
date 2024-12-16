@@ -29,7 +29,7 @@ function Signup() {
         confirmPassword,
         semester, // This is now directly an integer
       });
-      navigate("/login"); // Redirect to login page after signup
+      navigate("/"); // Redirect to login page after signup
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     }
