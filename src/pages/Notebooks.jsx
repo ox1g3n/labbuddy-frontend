@@ -95,7 +95,7 @@ const Notebooks = () => {
   const deleteQA = async (qaId) => {
     try {
       await axios.post(
-        'http://localhost:5001/api/qa/deleteQA',
+        'http://localhost:5001/api/qa/delete',
         { qaId },
         {
           headers: {
