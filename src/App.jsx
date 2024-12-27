@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Snippet from "./pages/Snippet.jsx";
 import Notebooks from "./pages/Notebooks.jsx";
+import Suggestions from "./pages/Suggestions.jsx";
 
 const App = () => {
   return (
@@ -34,6 +35,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Notebooks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/suggestions"
+          element={
+            <ProtectedRoute>
+              <Suggestions />
             </ProtectedRoute>
           }
         />

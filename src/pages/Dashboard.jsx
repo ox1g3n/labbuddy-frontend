@@ -16,7 +16,9 @@ function Dashboard() {
   const [notebooks, setNotebooks] = useState([]); // List of notebooks
   const [selectedNotebook, setSelectedNotebook] = useState(""); // Selected notebook
   const navigate = useNavigate();
-
+  const [showAiModal, setShowAiModal] = useState(false); // For AI modal
+  const [aiAction, setAiAction] = useState("suggestion"); // Dropdown option
+  const [aiResponse, setAiResponse] = useState(""); // Response from API
   // Fetch notebooks on component mount or when the modal opens
   useEffect(() => {
     if (showNotebookModal) {
@@ -37,6 +39,77 @@ function Dashboard() {
       console.error("Error fetching notebooks:", error.response?.data?.message || error.message);
     }
   };
+   
+  const handleAiAction = async () => {
+    if (!code.trim()) {
+      alert("Code editor is empty. Please write some code.");
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem("token");
+      console.log("Token being sent to Gemini API:", token);
+  
+      const apiEndpoint =
+        aiAction === "suggestion"
+          ? "http://localhost:5001/api/gemini/suggestions"
+          : aiAction === "complexity"
+          ? "http://localhost:5001/api/gemini/complexity"
+          : "http://localhost:5001/api/gemini/testcases";
+  
+      const response = await axios.post(
+        apiEndpoint,
+        { code },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      let formattedResponse;
+      if (Array.isArray(response.data.response)) {
+        // Remove unnecessary newline characters and join cases
+        formattedResponse = response.data.response
+          .map((testCase, index) => `Test Case ${index + 1}:\n${testCase.replace(/\n/g, ' ')}`)
+          .join("\n\n");
+      } else {
+        formattedResponse = response.data.response || "No response received.";
+      }
+  
+      setAiResponse(formattedResponse);
+    } catch (err) {
+      console.error("Error during API call:", err.response?.data || err.message);
+      setAiResponse(err.response?.data?.message || "Error while fetching response.");
+    }
+  };
+  
+
+ // Function to save the suggestion
+const handleSaveSuggestion = async () => {
+  if (!aiResponse.trim()||!code.trim()) {
+    alert("No suggestion or code to save.");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    // Replace the URL with the endpoint for saving suggestions
+    await axios.post(
+      "http://localhost:5001/api/suggestions/create",
+      { code: code,
+        suggestion: aiResponse },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    alert("Suggestion saved successfully!");
+  } catch (error) {
+    console.error("Error saving suggestion:", error.response?.data?.message || error.message);
+    alert("Failed to save suggestion. Please try again.");
+  }
+};
+ 
 
   const handleRun = async () => {
     try {
@@ -137,7 +210,8 @@ function Dashboard() {
             >
               Notebooks
             </li>
-            <li className="px-4 py-2 hover:bg-gray-700 cursor-pointer">
+            <li className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+            onClick={()=>navigate("/suggestions")}>
               Suggestions
             </li>
           </ul>
@@ -193,7 +267,7 @@ function Dashboard() {
             >
               Run
             </button>
-            <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+            <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowAiModal(true)}>
               Get AI Help
             </button>
             <button
@@ -221,6 +295,7 @@ function Dashboard() {
           </pre>
         </div>
       </div>
+
       {/*snippet modal*/}
       {showSnippetModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
@@ -296,6 +371,47 @@ function Dashboard() {
                 onClick={handleSaveQA}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-3/5 h-4/5 overflow-auto">
+            <h2 className="text-xl font-bold mb-4">Get AI Help</h2>
+            <select
+              value={aiAction}
+              onChange={(e) => setAiAction(e.target.value)}
+              className="w-full p-2 border rounded mb-4"
+            >
+              <option value="suggestion">Get Code Suggestion</option>
+              <option value="complexity">Get Code Complexity</option>
+              <option value="testcases">Generate Test Cases</option>
+            </select>
+            <textarea
+              value={aiResponse}
+              readOnly
+              className="w-full h-4/5 p-2 border rounded"
+            ></textarea>
+            <div className="flex justify-end mt-4">
+              <button
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+                onClick={() => setShowAiModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={handleAiAction}
+              >
+                Fetch AI Response
+              </button>
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mx-2"
+                onClick={handleSaveSuggestion}
+              >
+                Save Suggestion
               </button>
             </div>
           </div>
