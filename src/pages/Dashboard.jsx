@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Editor from "@monaco-editor/react";
-
+import ReactMarkdown from "react-markdown";
+import {toast} from "react-hot-toast";
 function Dashboard() {
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState("");
@@ -45,7 +46,7 @@ function Dashboard() {
       alert("Code editor is empty. Please write some code.");
       return;
     }
-  
+    const toastId=toast.loading("Ai help on the way...");
     try {
       const token = localStorage.getItem("token");
       console.log("Token being sent to Gemini API:", token);
@@ -76,10 +77,15 @@ function Dashboard() {
       }
   
       setAiResponse(formattedResponse);
+      toast.dismiss(toastId);
+      toast.success("Ai help arrived");
     } catch (err) {
       console.error("Error during API call:", err.response?.data || err.message);
       setAiResponse(err.response?.data?.message || "Error while fetching response.");
+      toast.dismiss(toastId);
+      toast.error(err.response?.data);
     }
+    
   };
   
 
