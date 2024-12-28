@@ -109,6 +109,11 @@ const Notebooks = () => {
     }
   };
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Code copied to clipboard!');
+  };
+
   return (
     <div className="p-8 min-h-screen bg-gray-100">
       <div className="flex justify-between items-center mb-6">
@@ -155,19 +160,27 @@ const Notebooks = () => {
                       className="flex justify-between items-center bg-gray-100 rounded-md px-3 py-2"
                     >
                       <div>
-                        <p className="text-sm font-medium">
-                          <span className="font-bold">Q:</span> {qa.question}
-                        </p>
                         <p className="text-sm text-gray-600">
-                          <span className="font-bold">Code:</span> {qa.code}
+                          <span className="font-bold">Code:</span>{' '}
+                          <pre className="bg-gray-200 p-2 rounded-md whitespace-pre-wrap">
+                            {qa.code}
+                          </pre>
                         </p>
                       </div>
-                      <button
-                        className="bg-red-600 text-white px-2 py-1 rounded-md hover:bg-red-700"
-                        onClick={() => deleteQA(qa._id)}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700"
+                          onClick={() => copyToClipboard(qa.code)}
+                        >
+                          Copy
+                        </button>
+                        <button
+                          className="bg-red-600 text-white px-2 py-1 rounded-md hover:bg-red-700"
+                          onClick={() => deleteQA(qa._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))
                 ) : (

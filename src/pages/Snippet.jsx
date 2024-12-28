@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FaClipboard } from 'react-icons/fa'; // Import clipboard icon
 
 const Snippet = () => {
     const [snippets, setSnippets] = useState([]);
@@ -49,6 +50,13 @@ const Snippet = () => {
         }
     };
 
+    // Copy to clipboard handler
+    const copyToClipboard = (code) => {
+        navigator.clipboard.writeText(code)
+            .then(() => alert('Copied to clipboard!'))
+            .catch((err) => console.error('Failed to copy: ', err));
+    };
+
     if (loading) return <div className="text-center text-lg font-semibold text-gray-500">Loading...</div>;
     if (error) return <div className="text-center text-lg font-semibold text-red-500">Error: {error}</div>;
 
@@ -76,9 +84,18 @@ const Snippet = () => {
                                 <h4 className="text-lg font-semibold text-gray-700">{snippet.name}</h4>
                                 <details className="mt-2 text-gray-600">
                                     <summary className="cursor-pointer">View Code</summary>
-                                    <pre className="bg-gray-100 p-3 mt-2 rounded-md text-sm overflow-x-auto">
-                                        {snippet.code}
-                                    </pre>
+                                    <div className="relative">
+                                        <pre className="bg-gray-100 p-3 mt-2 rounded-md text-sm overflow-x-auto">
+                                            {snippet.code}
+                                        </pre>
+                                        <button
+                                            onClick={() => copyToClipboard(snippet.code)}
+                                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                            title="Copy to clipboard"
+                                        >
+                                            <FaClipboard size={18} />
+                                        </button>
+                                    </div>
                                 </details>
                             </div>
                             <button
