@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaClipboard } from 'react-icons/fa'; // Import clipboard icon
+import { FaClipboard, FaTrash, FaChevronLeft, FaCode, FaPlus } from 'react-icons/fa';
 
 const Snippet = () => {
     const [snippets, setSnippets] = useState([]);
@@ -9,14 +9,13 @@ const Snippet = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Fetch snippets on component mount
     useEffect(() => {
         const fetchSnippets = async () => {
             try {
                 setLoading(true);
                 const response = await axios.get('http://localhost:5001/api/snippets', {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming a token-based authentication
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                 });
                 setSnippets(response.data.snippets);
@@ -30,8 +29,9 @@ const Snippet = () => {
         fetchSnippets();
     }, []);
 
-    // Delete snippet handler
     const deleteSnippet = async (snippetId) => {
+        if (!window.confirm('Are you sure you want to delete this snippet?')) return;
+        
         try {
             const response = await axios.post(
                 'http://localhost:5001/api/snippets/delete',
@@ -42,7 +42,6 @@ const Snippet = () => {
                     },
                 }
             );
-            // Remove the deleted snippet from the list
             setSnippets(snippets.filter((snippet) => snippet._id !== snippetId));
             alert(response.data.message);
         } catch (err) {
@@ -50,64 +49,101 @@ const Snippet = () => {
         }
     };
 
-    // Copy to clipboard handler
     const copyToClipboard = (code) => {
         navigator.clipboard.writeText(code)
             .then(() => alert('Copied to clipboard!'))
             .catch((err) => console.error('Failed to copy: ', err));
     };
 
-    if (loading) return <div className="text-center text-lg font-semibold text-gray-500">Loading...</div>;
-    if (error) return <div className="text-center text-lg font-semibold text-red-500">Error: {error}</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+                <div className="text-xl text-blue-400 animate-pulse">Loading snippets...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+                <div className="text-xl text-red-400">Error: {error}</div>
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-4xl mx-auto p-6 bg-gray-100 rounded-lg shadow-md relative">
-            {/* Back to Dashboard Button */}
-            <button
-                onClick={() => navigate('/dashboard')}
-                className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-500"
-            >
-                Dashboard
-            </button>
-
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Snippets</h2>
-            {snippets.length === 0 ? (
-                <div className="text-center text-gray-600 text-lg">No snippets found.</div>
-            ) : (
-                <ul className="space-y-4">
-                    {snippets.map((snippet) => (
-                        <li
-                            key={snippet._id}
-                            className="flex justify-between items-start bg-white p-4 rounded-lg shadow-md hover:shadow-lg"
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+            <div className="max-w-6xl mx-auto">
+                {/* Header Section */}
+                <div className="flex justify-between items-center mb-8">
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 border border-gray-700"
                         >
-                            <div className="flex-1">
-                                <h4 className="text-lg font-semibold text-gray-700">{snippet.name}</h4>
-                                <details className="mt-2 text-gray-600">
-                                    <summary className="cursor-pointer">View Code</summary>
+                            <FaChevronLeft className="text-blue-400" />
+                            <span>Dashboard</span>
+                        </button>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                            Code Snippets
+                        </h1>
+                    </div>
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg transition-all duration-300 transform hover:scale-[1.02]"
+                    >
+                        <FaPlus />
+                        <span>New Snippet</span>
+                    </button>
+                </div>
+
+                {/* Content Section */}
+                {snippets.length === 0 ? (
+                    <div className="text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700">
+                        <FaCode className="mx-auto text-4xl text-gray-600 mb-4" />
+                        <p className="text-xl text-gray-400">No snippets found</p>
+                        <p className="text-gray-500 mt-2">Create your first snippet from the code editor</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-6">
+                        {snippets.map((snippet) => (
+                            <div
+                                key={snippet._id}
+                                className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
+                            >
+                                <div className="p-6">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h3 className="text-xl font-semibold text-blue-400">
+                                            {snippet.name}
+                                        </h3>
+                                        <div className="flex items-center space-x-2">
+                                            <button
+                                                onClick={() => copyToClipboard(snippet.code)}
+                                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+                                                title="Copy to clipboard"
+                                            >
+                                                <FaClipboard className="text-gray-400 hover:text-blue-400" />
+                                            </button>
+                                            <button
+                                                onClick={() => deleteSnippet(snippet._id)}
+                                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+                                                title="Delete snippet"
+                                            >
+                                                <FaTrash className="text-red-400 hover:text-red-500" />
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="relative">
-                                        <pre className="bg-gray-100 p-3 mt-2 rounded-md text-sm overflow-x-auto">
+                                        <pre className="bg-gray-900/50 p-4 rounded-lg overflow-x-auto text-sm font-mono border border-gray-700">
                                             {snippet.code}
                                         </pre>
-                                        <button
-                                            onClick={() => copyToClipboard(snippet.code)}
-                                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                                            title="Copy to clipboard"
-                                        >
-                                            <FaClipboard size={18} />
-                                        </button>
                                     </div>
-                                </details>
+                                </div>
                             </div>
-                            <button
-                                onClick={() => deleteSnippet(snippet._id)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-md shadow hover:bg-red-400"
-                            >
-                                Delete
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

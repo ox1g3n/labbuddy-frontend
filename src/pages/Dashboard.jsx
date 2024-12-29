@@ -198,66 +198,81 @@ const handleSaveSuggestion = async () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-900">
       {/* Sidebar */}
-      <div className="w-1/5 bg-gray-800 text-white flex flex-col justify-between">
+      <div className="w-1/5 bg-gradient-to-b from-gray-800 to-gray-900 text-white flex flex-col justify-between border-r border-gray-700">
         <div>
-          <h2 className="text-center text-2xl font-bold py-4">LabBuddy</h2>
-          <ul>
+          <h2 className="text-center text-3xl font-bold py-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+            LabBuddy
+          </h2>
+          <ul className="mt-8 space-y-2">
             <li
-              className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+              className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
               onClick={() => navigate("/snippets")}
             >
-              Snippets
+              <span className="text-blue-400">📚</span>
+              <span>Snippets</span>
             </li>
             <li
-              className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+              className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
               onClick={() => navigate("/notebooks")}
             >
-              Notebooks
+              <span className="text-purple-400">📓</span>
+              <span>Notebooks</span>
             </li>
-            <li className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-            onClick={()=>navigate("/suggestions")}>
-              Suggestions
+            <li 
+              className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
+              onClick={() => navigate("/suggestions")}
+            >
+              <span className="text-green-400">💡</span>
+              <span>Suggestions</span>
             </li>
           </ul>
         </div>
         <button
           onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 m-4 rounded self-start"
+          className="m-4 px-6 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2"
         >
-          Logout
+          <span>🚪</span>
+          <span>Logout</span>
         </button>
       </div>
 
       {/* Main Area */}
-      <div className="w-4/5 flex flex-col">
-        <Editor
-          height="60%"
-          language={language}
-          value={code}
-          onChange={(value) => setCode(value || "")}
-          theme="vs-dark"
-          className="border-b"
-        />
+      <div className="w-4/5 flex flex-col bg-gray-900">
+        <div className="h-[60%] border-b border-gray-700">
+          <Editor
+            height="100%"
+            language={language}
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            theme="vs-dark"
+            options={{
+              fontSize: 14,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              padding: { top: 10 }
+            }}
+          />
+        </div>
 
-        <div className="p-4">
-          <label className="block mb-2 font-semibold">Input (Optional):</label>
+        <div className="p-6 bg-gray-800/50">
+          <label className="block mb-2 text-gray-300 font-medium">Input (Optional):</label>
           <textarea
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            className="w-full h-20 p-2 border rounded"
+            className="w-full h-24 p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             placeholder="Enter input for the program..."
           ></textarea>
         </div>
 
-        <div className="p-4 flex justify-between">
-          <div>
-            <label className="mr-2">Language:</label>
+        <div className="p-6 flex justify-between items-center bg-gray-800/30">
+          <div className="flex items-center space-x-4">
+            <label className="text-gray-300">Language:</label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="border p-1 rounded"
+              className="bg-gray-800 text-gray-300 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="python">Python</option>
               <option value="javascript">JavaScript</option>
@@ -266,68 +281,72 @@ const handleSaveSuggestion = async () => {
               <option value="c">C</option>
             </select>
           </div>
-          <div className="space-x-2">
+          <div className="flex space-x-3">
             <button
               onClick={handleRun}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
             >
-              Run
+              <span>▶️</span>
+              <span>Run</span>
             </button>
-            <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowAiModal(true)}>
-              Get AI Help
+            <button 
+              onClick={() => setShowAiModal(true)}
+              className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
+            >
+              <span>🤖</span>
+              <span>AI Help</span>
             </button>
             <button
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
               onClick={() => setShowSnippetModal(true)}
+              className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
             >
-              Save Snippet
+              <span>💾</span>
+              <span>Save Snippet</span>
             </button>
             <button
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
               onClick={() => setShowNotebookModal(true)}
+              className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
             >
-              Save in Notebook
+              <span>📓</span>
+              <span>Save in Notebook</span>
             </button>
           </div>
         </div>
 
-        <div className="p-4 bg-gray-100 border-t">
-          <h3 className="font-bold">Output:</h3>
-          <pre
-            className="bg-white p-2 mt-2 border rounded overflow-auto whitespace-pre-wrap break-words"
-            style={{ maxHeight: "200px" }}
-          >
+        <div className="p-6 bg-gray-800/10">
+          <h3 className="text-gray-300 font-medium mb-2">Output:</h3>
+          <pre className="bg-gray-800 text-gray-300 p-4 rounded-lg overflow-auto whitespace-pre-wrap break-words border border-gray-700" style={{ maxHeight: "200px" }}>
             {output || error}
           </pre>
         </div>
       </div>
 
-      {/*snippet modal*/}
+      {/* Modals with enhanced UI */}
       {showSnippetModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">Save Snippet</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center">
+          <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-1/3 border border-gray-700">
+            <h2 className="text-2xl font-bold mb-6 text-gray-200">Save Snippet</h2>
             <input
               type="text"
               value={snippetName}
               onChange={(e) => setSnippetName(e.target.value)}
               placeholder="Snippet Name"
-              className="w-full p-2 border rounded mb-4"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <textarea
               value={code}
               readOnly
-              className="w-full p-2 border rounded h-32 mb-4"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 h-32 mb-6"
             ></textarea>
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-3">
               <button
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+                className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-300"
                 onClick={() => setShowSnippetModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
                 onClick={handleSnippetSave}
               >
                 Save
@@ -335,27 +354,27 @@ const handleSaveSuggestion = async () => {
             </div>
           </div>
         </div>
-      )} 
-      {/* Notebook Modal */}
+      )}
+
       {showNotebookModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">Save QA to Notebook</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center">
+          <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-1/3 border border-gray-700">
+            <h2 className="text-2xl font-bold mb-6 text-gray-200">Save QA to Notebook</h2>
             <input
               type="text"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your question"
-              className="w-full p-2 border rounded mb-4"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <select
               value={selectedNotebook}
               onChange={(e) => setSelectedNotebook(e.target.value)}
-              className="w-full p-2 border rounded mb-4"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select Notebook</option>
               {notebooks.map((notebook) => (
-                <option key={notebook._id} value={notebook._id}>
+                <option key={notebook._id} value={notebook._id} className="bg-gray-800">
                   {notebook.name}
                 </option>
               ))}
@@ -363,17 +382,17 @@ const handleSaveSuggestion = async () => {
             <textarea
               value={code}
               readOnly
-              className="w-full p-2 border rounded h-32 mb-4"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 h-32 mb-6"
             ></textarea>
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-3">
               <button
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+                className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-300"
                 onClick={() => setShowNotebookModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
                 onClick={handleSaveQA}
               >
                 Save
@@ -382,39 +401,42 @@ const handleSaveSuggestion = async () => {
           </div>
         </div>
       )}
+
       {showAiModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-3/5 h-4/5 overflow-auto">
-            <h2 className="text-xl font-bold mb-4">Get AI Help</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center">
+          <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-3/5 h-4/5 border border-gray-700 flex flex-col">
+            <h2 className="text-2xl font-bold mb-6 text-gray-200">Get AI Help</h2>
             <select
               value={aiAction}
               onChange={(e) => setAiAction(e.target.value)}
-              className="w-full p-2 border rounded mb-4"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-6 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="suggestion">Get Code Suggestion</option>
               <option value="complexity">Get Code Complexity</option>
               <option value="testcases">Generate Test Cases</option>
             </select>
-            <textarea
-              value={aiResponse}
-              readOnly
-              className="w-full h-4/5 p-2 border rounded"
-            ></textarea>
-            <div className="flex justify-end mt-4">
+            <div className="flex-1 mb-6">
+              <div className="bg-gray-700 border border-gray-600 rounded-lg h-full p-4 overflow-auto">
+                <ReactMarkdown className="text-gray-200 prose prose-invert max-w-none">
+                  {aiResponse || "AI response will appear here..."}
+                </ReactMarkdown>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3">
               <button
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+                className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-300"
                 onClick={() => setShowAiModal(false)}
               >
                 Close
               </button>
               <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-300"
                 onClick={handleAiAction}
               >
                 Fetch AI Response
               </button>
               <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mx-2"
+                className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all duration-300"
                 onClick={handleSaveSuggestion}
               >
                 Save Suggestion

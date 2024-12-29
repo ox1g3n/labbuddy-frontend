@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FaTrash, FaChevronLeft, FaCopy } from 'react-icons/fa';
 
 function Suggestions() {
   const [suggestions, setSuggestions] = useState([]);
@@ -8,7 +9,6 @@ function Suggestions() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch suggestions on component mount
     const fetchSuggestions = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -43,7 +43,6 @@ function Suggestions() {
           },
         }
       );
-      // Remove deleted suggestion from state
       setSuggestions(suggestions.filter((s) => s._id !== suggestionId));
       alert('Suggestion deleted successfully.');
     } catch (error) {
@@ -52,49 +51,102 @@ function Suggestions() {
     }
   };
 
-  if (loading) return <div>Loading suggestions...</div>;
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+      .then(() => alert('Copied to clipboard!'))
+      .catch(err => console.error('Failed to copy:', err));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-xl text-blue-400 animate-pulse">Loading suggestions...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      {/* Dashboard Button */}
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-        onClick={() => navigate('/dashboard')}
-      >
-        Dashboard
-      </button>
-
-      <h1 className="text-2xl font-bold mb-4">Suggestions</h1>
-
-      {suggestions.length === 0 ? (
-        <p>No suggestions available.</p>
-      ) : (
-        <ul className="space-y-4">
-          {suggestions.map((suggestion) => (
-            <li
-              key={suggestion._id}
-              className="border p-4 rounded shadow-md flex justify-between items-center"
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center space-x-4">
+            <button
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 border border-gray-700"
+              onClick={() => navigate('/dashboard')}
             >
-              <div>
-                <p className="font-semibold">Code:</p>
-                <pre className="bg-gray-100 p-2 rounded mb-2">{suggestion.code}</pre>
-                <p className="font-semibold">Suggestion:</p>
-                <p>{suggestion.suggestion}</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Created at: {new Date(suggestion.createdAt).toLocaleString()}
-                </p>
-              </div>
+              <FaChevronLeft className="text-blue-400" />
+              <span>Dashboard</span>
+            </button>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              AI Suggestions
+            </h1>
+          </div>
+        </div>
 
-              <button
-                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                onClick={() => handleDelete(suggestion._id)}
+        {/* Content Section */}
+        {suggestions.length === 0 ? (
+          <div className="text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p className="text-xl text-gray-400">No suggestions available yet.</p>
+            <p className="text-gray-500 mt-2">Use the AI Help feature in the code editor to get suggestions.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {suggestions.map((suggestion) => (
+              <div
+                key={suggestion._id}
+                className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
               >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+                <div className="p-6">
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-semibold text-blue-400">Code</h3>
+                      <button
+                        onClick={() => copyToClipboard(suggestion.code)}
+                        className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+                        title="Copy code"
+                      >
+                        <FaCopy className="text-gray-400 hover:text-blue-400" />
+                      </button>
+                    </div>
+                    <pre className="bg-gray-900/50 p-4 rounded-lg overflow-x-auto text-sm font-mono border border-gray-700">
+                      {suggestion.code}
+                    </pre>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-semibold text-purple-400">Suggestion</h3>
+                      <button
+                        onClick={() => copyToClipboard(suggestion.suggestion)}
+                        className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+                        title="Copy suggestion"
+                      >
+                        <FaCopy className="text-gray-400 hover:text-blue-400" />
+                      </button>
+                    </div>
+                    <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                      {suggestion.suggestion}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-between items-center text-sm text-gray-500">
+                    <span>Created: {new Date(suggestion.createdAt).toLocaleString()}</span>
+                    <button
+                      onClick={() => handleDelete(suggestion._id)}
+                      className="flex items-center space-x-2 px-3 py-1 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
+                      title="Delete suggestion"
+                    >
+                      <FaTrash />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

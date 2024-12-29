@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { FaBook, FaPlus, FaTrash, FaChevronDown, FaChevronUp, FaChevronLeft, FaTimes, FaCode } from 'react-icons/fa';
 
 const Notebooks = () => {
   const [notebooks, setNotebooks] = useState([]);
@@ -9,6 +11,7 @@ const Notebooks = () => {
   const [selectedNotebookId, setSelectedNotebookId] = useState(null);
   const [showNotebookModal, setShowNotebookModal] = useState(false);
   const [showQAModal, setShowQAModal] = useState(false);
+  const navigate = useNavigate();
 
   const authToken = localStorage.getItem('token');
 
@@ -50,6 +53,8 @@ const Notebooks = () => {
   };
 
   const deleteNotebook = async (notebookId) => {
+    if (!window.confirm('Are you sure you want to delete this notebook?')) return;
+    
     try {
       await axios.post(
         'http://localhost:5001/api/notebooks/delete',
@@ -93,6 +98,8 @@ const Notebooks = () => {
   };
 
   const deleteQA = async (qaId) => {
+    if (!window.confirm('Are you sure you want to delete this QA?')) return;
+    
     try {
       await axios.post(
         'http://localhost:5001/api/qa/delete',
@@ -115,173 +122,223 @@ const Notebooks = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen bg-gray-100">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Your Notebooks</h1>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-          onClick={() => (window.location.href = '/dashboard')}
-        >
-          Dashboard
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {notebooks.map((notebook) => (
-          <div
-            key={notebook._id}
-            className="bg-white shadow-md rounded-md p-4 space-y-2"
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 border border-gray-700"
+            >
+              <FaChevronLeft className="text-blue-400" />
+              <span>Dashboard</span>
+            </button>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              Notebooks
+            </h1>
+          </div>
+          <button
+            onClick={() => setShowNotebookModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg transition-all duration-300 transform hover:scale-[1.02]"
           >
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <button
-                  className="text-gray-600 hover:text-gray-800"
+            <FaPlus />
+            <span>New Notebook</span>
+          </button>
+        </div>
+
+        {/* Content Section */}
+        {notebooks.length === 0 ? (
+          <div className="text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700">
+            <FaBook className="mx-auto text-4xl text-gray-600 mb-4" />
+            <p className="text-xl text-gray-400">No notebooks found</p>
+            <p className="text-gray-500 mt-2">Create your first notebook to start organizing your code</p>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {notebooks.map((notebook) => (
+              <div
+                key={notebook._id}
+                className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
+              >
+                <div
+                  className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-700/30"
                   onClick={() => toggleNotebook(notebook._id)}
                 >
-                  {expandedNotebookId === notebook._id ? '▼' : '►'}
-                </button>
-                <h2 className="text-lg font-medium">{notebook.name}</h2>
-              </div>
-              <button
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                onClick={() => deleteNotebook(notebook._id)}
-              >
-                Delete
-              </button>
-            </div>
-
-            {/* QA List */}
-            {expandedNotebookId === notebook._id && (
-              <div className="space-y-2 pl-6">
-                {notebook.qa.length > 0 ? (
-                  notebook.qa.map((qa) => (
-                    <div
-                      key={qa._id}
-                      className="flex justify-between items-center bg-gray-100 rounded-md px-3 py-2"
+                  <div className="flex items-center space-x-3">
+                    <FaBook className="text-blue-400" />
+                    <h3 className="text-lg font-semibold">{notebook.name}</h3>
+                    <span className="text-sm text-gray-500">
+                      ({notebook.qa.length} {notebook.qa.length === 1 ? 'item' : 'items'})
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedNotebookId(notebook._id);
+                        setShowQAModal(true);
+                      }}
+                      className="px-3 py-1 text-sm bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors duration-300"
                     >
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-bold">Code:</span>{' '}
-                          <pre className="bg-gray-200 p-2 rounded-md whitespace-pre-wrap">
-                            {qa.code}
-                          </pre>
-                        </p>
+                      Add QA
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotebook(notebook._id);
+                      }}
+                      className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
+                    >
+                      <FaTrash />
+                    </button>
+                    {expandedNotebookId === notebook._id ? <FaChevronUp /> : <FaChevronDown />}
+                  </div>
+                </div>
+
+                {expandedNotebookId === notebook._id && (
+                  <div className="border-t border-gray-700">
+                    {notebook.qa.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500">
+                        No QAs in this notebook yet
                       </div>
-                      <div className="flex space-x-2">
-                        <button
-                          className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700"
-                          onClick={() => copyToClipboard(qa.code)}
-                        >
-                          Copy
-                        </button>
-                        <button
-                          className="bg-red-600 text-white px-2 py-1 rounded-md hover:bg-red-700"
-                          onClick={() => deleteQA(qa._id)}
-                        >
-                          Delete
-                        </button>
+                    ) : (
+                      <div className="divide-y divide-gray-700">
+                        {notebook.qa.map((qa) => (
+                          <div key={qa._id} className="p-6 hover:bg-gray-700/30">
+                            <div className="flex justify-between items-start mb-4">
+                              <h4 className="text-lg font-medium text-blue-400">{qa.question}</h4>
+                              <button
+                                onClick={() => deleteQA(qa._id)}
+                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                            <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                              <div className="mb-2 text-sm text-gray-500">Language: {qa.language}</div>
+                              <pre className="text-sm font-mono overflow-x-auto">
+                                {qa.code}
+                              </pre>
+                              <button
+                                onClick={() => copyToClipboard(qa.code)}
+                                className="px-3 py-1 flex gap-2 items-center mt-8 text-sm bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors duration-300"
+                              >
+                                <FaCode />
+                                Copy
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-600 italic">No QAs available.</p>
+                    )}
+                  </div>
                 )}
-                <button
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                  onClick={() => {
-                    setSelectedNotebookId(notebook._id);
-                    setShowQAModal(true);
-                  }}
-                >
-                  Add QA
-                </button>
               </div>
-            )}
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Plus Button */}
-      <button
-        className="fixed bottom-8 right-8 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700"
-        onClick={() => setShowNotebookModal(true)}
-      >
-        +
-      </button>
-
-      {/* Modal for Adding Notebook */}
+      {/* Create Notebook Modal */}
       {showNotebookModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-md shadow-lg w-80 space-y-4">
-            <h2 className="text-lg font-bold">Add New Notebook</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-1/3 border border-gray-700">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-200">Create New Notebook</h2>
+              <button
+                onClick={() => setShowNotebookModal(false)}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+              >
+                <FaTimes className="text-gray-500 hover:text-gray-400" />
+              </button>
+            </div>
             <input
               type="text"
-              placeholder="Enter notebook name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
               value={newNotebookName}
               onChange={(e) => setNewNotebookName(e.target.value)}
+              placeholder="Notebook Name"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-6 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-3">
               <button
-                className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400"
                 onClick={() => setShowNotebookModal(false)}
+                className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-300"
               >
                 Cancel
               </button>
               <button
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
                 onClick={createNotebook}
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
               >
-                Save
+                Create
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal for Adding QA */}
+      {/* Create QA Modal */}
       {showQAModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-md shadow-lg w-80 space-y-4">
-            <h2 className="text-lg font-bold">Add New QA</h2>
-            <input
-              type="text"
-              placeholder="Enter question"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              value={newQA.question}
-              onChange={(e) =>
-                setNewQA({ ...newQA, question: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="Enter programming language"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              value={newQA.language}
-              onChange={(e) =>
-                setNewQA({ ...newQA, language: e.target.value })
-              }
-            />
-            <textarea
-              placeholder="Enter code snippet"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              value={newQA.code}
-              onChange={(e) =>
-                setNewQA({ ...newQA, code: e.target.value })
-              }
-            />
-            <div className="flex justify-end space-x-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-2/3 border border-gray-700">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-200">Add New QA</h2>
               <button
-                className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400"
                 onClick={() => setShowQAModal(false)}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+              >
+                <FaTimes className="text-gray-500 hover:text-gray-400" />
+              </button>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Question</label>
+                <input
+                  type="text"
+                  value={newQA.question}
+                  onChange={(e) => setNewQA({ ...newQA, question: e.target.value })}
+                  placeholder="Enter your question"
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Language</label>
+                <select
+                  value={newQA.language}
+                  onChange={(e) => setNewQA({ ...newQA, language: e.target.value })}
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Language</option>
+                  <option value="python">Python</option>
+                  <option value="javascript">JavaScript</option>
+                  <option value="java">Java</option>
+                  <option value="cpp">C++</option>
+                  <option value="c">C</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Code</label>
+                <textarea
+                  value={newQA.code}
+                  onChange={(e) => setNewQA({ ...newQA, code: e.target.value })}
+                  placeholder="Enter your code"
+                  className="w-full h-48 p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowQAModal(false)}
+                className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-300"
               >
                 Cancel
               </button>
               <button
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
                 onClick={createQA}
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
               >
-                Save
+                Create
               </button>
             </div>
           </div>
