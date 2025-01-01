@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaClipboard, FaTrash, FaChevronLeft, FaCode, FaPlus } from 'react-icons/fa';
+import { FaClipboard, FaTrash, FaChevronLeft, FaCode, FaPlus, FaSearch } from 'react-icons/fa';
 
 const Snippet = () => {
     const [snippets, setSnippets] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -97,50 +98,67 @@ const Snippet = () => {
                     </button>
                 </div>
 
+                {/* Search Bar */}
+                <div className="mb-6">
+                    <div className="relative">
+                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search snippets by name..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 text-gray-100"
+                        />
+                    </div>
+                </div>
+
                 {/* Content Section */}
                 {snippets.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700">
-                        <FaCode className="mx-auto text-4xl text-gray-600 mb-4" />
-                        <p className="text-xl text-gray-400">No snippets found</p>
-                        <p className="text-gray-500 mt-2">Create your first snippet from the code editor</p>
+                    <div className="text-center text-gray-400 mt-8">
+                        <FaCode className="text-6xl mx-auto mb-4" />
+                        <p className="text-xl">No snippets found. Create your first snippet!</p>
                     </div>
                 ) : (
                     <div className="grid gap-6">
-                        {snippets.map((snippet) => (
-                            <div
-                                key={snippet._id}
-                                className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
-                            >
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-xl font-semibold text-blue-400">
-                                            {snippet.name}
-                                        </h3>
-                                        <div className="flex items-center space-x-2">
-                                            <button
-                                                onClick={() => copyToClipboard(snippet.code)}
-                                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
-                                                title="Copy to clipboard"
-                                            >
-                                                <FaClipboard className="text-gray-400 hover:text-blue-400" />
-                                            </button>
-                                            <button
-                                                onClick={() => deleteSnippet(snippet._id)}
-                                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
-                                                title="Delete snippet"
-                                            >
-                                                <FaTrash className="text-red-400 hover:text-red-500" />
-                                            </button>
+                        {snippets
+                            .filter(snippet => 
+                                snippet.name.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
+                            .map((snippet) => (
+                                <div
+                                    key={snippet._id}
+                                    className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
+                                >
+                                    <div className="p-6">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <h3 className="text-xl font-semibold text-blue-400">
+                                                {snippet.name}
+                                            </h3>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => copyToClipboard(snippet.code)}
+                                                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+                                                    title="Copy to clipboard"
+                                                >
+                                                    <FaClipboard className="text-gray-400 hover:text-blue-400" />
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteSnippet(snippet._id)}
+                                                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
+                                                    title="Delete snippet"
+                                                >
+                                                    <FaTrash className="text-red-400 hover:text-red-500" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="relative">
+                                            <pre className="bg-gray-900/50 p-4 rounded-lg overflow-x-auto text-sm font-mono border border-gray-700">
+                                                {snippet.code}
+                                            </pre>
                                         </div>
                                     </div>
-                                    <div className="relative">
-                                        <pre className="bg-gray-900/50 p-4 rounded-lg overflow-x-auto text-sm font-mono border border-gray-700">
-                                            {snippet.code}
-                                        </pre>
-                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
                     </div>
                 )}
             </div>

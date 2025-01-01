@@ -403,26 +403,43 @@ const handleSaveSuggestion = async () => {
       )}
 
       {showAiModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-3/5 h-4/5 border border-gray-700 flex flex-col">
-            <h2 className="text-2xl font-bold mb-6 text-gray-200">Get AI Help</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center p-4">
+          <div className="bg-gray-800 p-6 rounded-xl shadow-2xl w-3/4 max-w-4xl border border-gray-700 flex flex-col" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+            <h2 className="text-2xl font-bold mb-4 text-gray-200 flex-shrink-0">Get AI Help</h2>
             <select
               value={aiAction}
               onChange={(e) => setAiAction(e.target.value)}
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-6 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
             >
               <option value="suggestion">Get Code Suggestion</option>
               <option value="complexity">Get Code Complexity</option>
               <option value="testcases">Generate Test Cases</option>
             </select>
-            <div className="flex-1 mb-6">
-              <div className="bg-gray-700 border border-gray-600 rounded-lg h-full p-4 overflow-auto">
-                <ReactMarkdown className="text-gray-200 prose prose-invert max-w-none">
-                  {aiResponse || "AI response will appear here..."}
-                </ReactMarkdown>
+            <div className="overflow-y-auto flex-grow min-h-0">
+              <div className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown 
+                    className="text-gray-200"
+                    components={{
+                      p: ({node, ...props}) => (
+                        <p className="mb-4" {...props} />
+                      ),
+                      pre: ({node, ...props}) => (
+                        <pre className="bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4 whitespace-pre-wrap" {...props} />
+                      ),
+                      code: ({node, inline, ...props}) => (
+                        inline ? 
+                          <code className="bg-gray-800 px-1 py-0.5 rounded" {...props} /> :
+                          <code className="block text-sm font-mono" {...props} />
+                      )
+                    }}
+                  >
+                    {aiResponse || "AI response will appear here..."}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 pt-4 mt-4 border-t border-gray-700 flex-shrink-0">
               <button
                 className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-300"
                 onClick={() => setShowAiModal(false)}

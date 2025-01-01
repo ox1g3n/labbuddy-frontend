@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FaBook, FaPlus, FaTrash, FaChevronDown, FaChevronUp, FaChevronLeft, FaTimes, FaCode } from 'react-icons/fa';
+import { FaBook, FaPlus, FaTrash, FaChevronDown, FaChevronUp, FaChevronLeft, FaTimes, FaCode, FaSearch, FaDownload } from 'react-icons/fa';
+import html2pdf from 'html2pdf.js';
 
 const Notebooks = () => {
   const [notebooks, setNotebooks] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [expandedNotebookId, setExpandedNotebookId] = useState(null);
   const [newNotebookName, setNewNotebookName] = useState('');
   const [newQA, setNewQA] = useState({ question: '', language: '', code: '' });
@@ -121,6 +123,42 @@ const Notebooks = () => {
     alert('Code copied to clipboard!');
   };
 
+  const exportToPdf = async (notebook) => {
+    // Create a temporary div for the content
+    const content = document.createElement('div');
+    content.innerHTML = `
+      <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h1 style="color: #2563eb; margin-bottom: 20px;">${notebook.name}</h1>
+        ${notebook.qa.map((qa, index) => `
+          <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+            <h3 style="color: #1e40af; margin-bottom: 10px;">Question ${index + 1}: ${qa.question}</h3>
+            <div style="margin-bottom: 10px;">
+              <strong>Language:</strong> ${qa.language}
+            </div>
+            <div style="background-color: #f1f1f1; padding: 10px; border-radius: 4px; font-family: monospace;">
+              ${qa.code}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    const opt = {
+      margin: 1,
+      filename: `${notebook.name.replace(/\s+/g, '_')}_notebook.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    try {
+      await html2pdf().from(content).set(opt).save();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -147,6 +185,20 @@ const Notebooks = () => {
           </button>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search notebooks by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 text-gray-100"
+            />
+          </div>
+        </div>
+
         {/* Content Section */}
         {notebooks.length === 0 ? (
           <div className="text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700">
@@ -156,86 +208,100 @@ const Notebooks = () => {
           </div>
         ) : (
           <div className="grid gap-6">
-            {notebooks.map((notebook) => (
-              <div
-                key={notebook._id}
-                className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
-              >
+            {notebooks
+              .filter((notebook) =>
+                notebook.name.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map((notebook) => (
                 <div
-                  className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-700/30"
-                  onClick={() => toggleNotebook(notebook._id)}
+                  key={notebook._id}
+                  className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-300"
                 >
-                  <div className="flex items-center space-x-3">
-                    <FaBook className="text-blue-400" />
-                    <h3 className="text-lg font-semibold">{notebook.name}</h3>
-                    <span className="text-sm text-gray-500">
-                      ({notebook.qa.length} {notebook.qa.length === 1 ? 'item' : 'items'})
-                    </span>
+                  <div
+                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-700/30"
+                    onClick={() => toggleNotebook(notebook._id)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <FaBook className="text-blue-400" />
+                      <h3 className="text-lg font-semibold">{notebook.name}</h3>
+                      <span className="text-sm text-gray-500">
+                        ({notebook.qa.length} {notebook.qa.length === 1 ? 'item' : 'items'})
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedNotebookId(notebook._id);
+                          setShowQAModal(true);
+                        }}
+                        className="px-3 py-1 text-sm bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors duration-300"
+                      >
+                        Add QA
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotebook(notebook._id);
+                        }}
+                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
+                      >
+                        <FaTrash />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          exportToPdf(notebook);
+                        }}
+                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors duration-300"
+                        title="Export to PDF"
+                      >
+                        <FaDownload />
+                      </button>
+                      {expandedNotebookId === notebook._id ? <FaChevronUp /> : <FaChevronDown />}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedNotebookId(notebook._id);
-                        setShowQAModal(true);
-                      }}
-                      className="px-3 py-1 text-sm bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors duration-300"
-                    >
-                      Add QA
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotebook(notebook._id);
-                      }}
-                      className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
-                    >
-                      <FaTrash />
-                    </button>
-                    {expandedNotebookId === notebook._id ? <FaChevronUp /> : <FaChevronDown />}
-                  </div>
-                </div>
 
-                {expandedNotebookId === notebook._id && (
-                  <div className="border-t border-gray-700">
-                    {notebook.qa.length === 0 ? (
-                      <div className="p-6 text-center text-gray-500">
-                        No QAs in this notebook yet
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-700">
-                        {notebook.qa.map((qa) => (
-                          <div key={qa._id} className="p-6 hover:bg-gray-700/30">
-                            <div className="flex justify-between items-start mb-4">
-                              <h4 className="text-lg font-medium text-blue-400">{qa.question}</h4>
-                              <button
-                                onClick={() => deleteQA(qa._id)}
-                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
-                              >
-                                <FaTrash />
-                              </button>
+                  {expandedNotebookId === notebook._id && (
+                    <div className="border-t border-gray-700">
+                      {notebook.qa.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                          No QAs in this notebook yet
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-700">
+                          {notebook.qa.map((qa) => (
+                            <div key={qa._id} className="p-6 hover:bg-gray-700/30">
+                              <div className="flex justify-between items-start mb-4">
+                                <h4 className="text-lg font-medium text-blue-400">{qa.question}</h4>
+                                <button
+                                  onClick={() => deleteQA(qa._id)}
+                                  className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </div>
+                              <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                                <div className="mb-2 text-sm text-gray-500">Language: {qa.language}</div>
+                                <pre className="text-sm font-mono overflow-x-auto">
+                                  {qa.code}
+                                </pre>
+                                <button
+                                  onClick={() => copyToClipboard(qa.code)}
+                                  className="px-3 py-1 flex gap-2 items-center mt-8 text-sm bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors duration-300"
+                                >
+                                  <FaCode />
+                                  Copy
+                                </button>
+                              </div>
                             </div>
-                            <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                              <div className="mb-2 text-sm text-gray-500">Language: {qa.language}</div>
-                              <pre className="text-sm font-mono overflow-x-auto">
-                                {qa.code}
-                              </pre>
-                              <button
-                                onClick={() => copyToClipboard(qa.code)}
-                                className="px-3 py-1 flex gap-2 items-center mt-8 text-sm bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors duration-300"
-                              >
-                                <FaCode />
-                                Copy
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
         )}
       </div>
