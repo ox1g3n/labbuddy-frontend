@@ -7,12 +7,12 @@ function Suggestions() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+  const BASE_URL=import.meta.env.VITE_BASE_URL;
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5001/api/suggestions/', {
+        const response = await axios.get(`${BASE_URL}api/suggestions/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -35,7 +35,7 @@ function Suggestions() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:5001/api/suggestions/delete',
+        `${BASE_URL}api/suggestions/delete`,
         { suggestionId },
         {
           headers: {

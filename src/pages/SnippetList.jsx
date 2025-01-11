@@ -3,13 +3,14 @@ import axios from "axios";
 import SnippetModal from "./SnippetModal";
 
 function SnippetList() {
+  const BASE_URL=import.meta.env.VITE_BASE_URL;
   const [snippets, setSnippets] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
 
   const fetchSnippets = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5001/api/snippets", {
+      const response = await axios.get(`${BASE_URL}api/snippets`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -24,7 +25,7 @@ function SnippetList() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5001/api/snippets/create",
+        `${BASE_URL}api/snippets/create`,
         { name, code },
         {
           headers: {

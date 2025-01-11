@@ -4,6 +4,7 @@ import axios from 'axios';
 import { FaClipboard, FaTrash, FaChevronLeft, FaCode, FaPlus, FaSearch } from 'react-icons/fa';
 
 const Snippet = () => {
+    const BASE_URL=import.meta.env.VITE_BASE_URL;
     const [snippets, setSnippets] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
@@ -14,7 +15,7 @@ const Snippet = () => {
         const fetchSnippets = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:5001/api/snippets', {
+                const response = await axios.get(`${BASE_URL}api/snippets`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
@@ -35,7 +36,7 @@ const Snippet = () => {
         
         try {
             const response = await axios.post(
-                'http://localhost:5001/api/snippets/delete',
+                `${BASE_URL}api/snippets/delete`,
                 { snippetId },
                 {
                     headers: {

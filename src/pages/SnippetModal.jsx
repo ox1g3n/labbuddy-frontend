@@ -3,7 +3,7 @@ import React, { useState } from "react";
 function SnippetModal({ isOpen, onClose, onSave, existingCode }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState(existingCode || "");
-
+  const BASE_URL=import.meta.env.VITE_BASE_URL;
   const handleSave = () => {
     if (!name.trim()) {
       alert("Please enter a snippet name.");

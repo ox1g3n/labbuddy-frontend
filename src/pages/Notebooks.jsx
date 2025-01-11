@@ -5,6 +5,7 @@ import { FaBook, FaPlus, FaTrash, FaChevronDown, FaChevronUp, FaChevronLeft, FaT
 import html2pdf from 'html2pdf.js';
 
 const Notebooks = () => {
+  const BASE_URL=import.meta.env.VITE_BASE_URL;
   const [notebooks, setNotebooks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedNotebookId, setExpandedNotebookId] = useState(null);
@@ -23,7 +24,7 @@ const Notebooks = () => {
 
   const fetchNotebooks = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/notebooks/', {
+      const response = await axios.get(`${BASE_URL}api/notebooks/`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -38,7 +39,7 @@ const Notebooks = () => {
     if (!newNotebookName.trim()) return alert('Notebook name is required');
     try {
       await axios.post(
-        'http://localhost:5001/api/notebooks/create',
+        `${BASE_URL}api/notebooks/create`,
         { name: newNotebookName },
         {
           headers: {
@@ -59,7 +60,7 @@ const Notebooks = () => {
     
     try {
       await axios.post(
-        'http://localhost:5001/api/notebooks/delete',
+        `${BASE_URL}api/notebooks/delete`,
         { notebookId },
         {
           headers: {
@@ -83,7 +84,7 @@ const Notebooks = () => {
       return alert('Please fill out all fields to create a QA');
     try {
       await axios.post(
-        'http://localhost:5001/api/qa/createQA',
+        `${BASE_URL}api/qa/createQA`,
         { ...newQA, nbid: selectedNotebookId },
         {
           headers: {
@@ -104,7 +105,7 @@ const Notebooks = () => {
     
     try {
       await axios.post(
-        'http://localhost:5001/api/qa/delete',
+        `${BASE_URL}api/qa/delete`,
         { qaId },
         {
           headers: {

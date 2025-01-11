@@ -5,6 +5,7 @@ import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
 import {toast} from "react-hot-toast";
 function Dashboard() {
+  const BASE_URL=import.meta.env.VITE_BASE_URL;
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState("");
   const [userInput, setUserInput] = useState("");
@@ -30,7 +31,7 @@ function Dashboard() {
   const fetchNotebooks = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5001/api/notebooks", {
+      const response = await axios.get(`${BASE_URL}api/notebooks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -53,10 +54,10 @@ function Dashboard() {
   
       const apiEndpoint =
         aiAction === "suggestion"
-          ? "http://localhost:5001/api/gemini/suggestions"
+          ? `${BASE_URL}api/gemini/suggestions`
           : aiAction === "complexity"
-          ? "http://localhost:5001/api/gemini/complexity"
-          : "http://localhost:5001/api/gemini/testcases";
+          ? `${BASE_URL}api/gemini/complexity`
+          : `${BASE_URL}api/gemini/testcases`;
   
       const response = await axios.post(
         apiEndpoint,
@@ -100,7 +101,7 @@ const handleSaveSuggestion = async () => {
     const token = localStorage.getItem("token");
     // Replace the URL with the endpoint for saving suggestions
     await axios.post(
-      "http://localhost:5001/api/suggestions/create",
+      `${BASE_URL}api/suggestions/create`,
       { code: code,
         suggestion: aiResponse },
       {
@@ -121,7 +122,7 @@ const handleSaveSuggestion = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5001/api/code/run",
+       `${BASE_URL}api/code/run`,
         { language, code, input: userInput },
         {
           headers: {
@@ -138,7 +139,7 @@ const handleSaveSuggestion = async () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5001/api/auth/logout");
+      await axios.post(`${BASE_URL}api/auth/logout`);
       localStorage.removeItem("token");
       navigate("/");
     } catch (error) {
@@ -153,7 +154,7 @@ const handleSaveSuggestion = async () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:5001/api/snippets/create",
+        `${BASE_URL}api/snippets/create`,
         { name: snippetName, code, language },
         {
           headers: {
@@ -179,7 +180,7 @@ const handleSaveSuggestion = async () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:5001/api/qa/createQA",
+       `${BASE_URL}api/qa/createQA`,
         { question, code, language, nbid: selectedNotebook },
         {
           headers: {
