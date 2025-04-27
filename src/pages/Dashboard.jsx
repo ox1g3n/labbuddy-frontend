@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
 import {toast} from "react-hot-toast";
+
 function Dashboard() {
   const BASE_URL=import.meta.env.VITE_BASE_URL;
   const [language, setLanguage] = useState("python");
@@ -14,14 +15,19 @@ function Dashboard() {
   const [showSnippetModal, setShowSnippetModal] = useState(false);
   const [showNotebookModal, setShowNotebookModal] = useState(false);
   const [snippetName, setSnippetName] = useState("");
-  const [question, setQuestion] = useState(""); // Question for the QA
-  const [notebooks, setNotebooks] = useState([]); // List of notebooks
-  const [selectedNotebook, setSelectedNotebook] = useState(""); // Selected notebook
+  const [question, setQuestion] = useState(""); 
+  const [notebooks, setNotebooks] = useState([]); 
+  const [selectedNotebook, setSelectedNotebook] = useState(""); 
   const navigate = useNavigate();
-  const [showAiModal, setShowAiModal] = useState(false); // For AI modal
-  const [aiAction, setAiAction] = useState("suggestion"); // Dropdown option
-  const [aiResponse, setAiResponse] = useState(""); // Response from API
-  // Fetch notebooks on component mount or when the modal opens
+  const location = useLocation(); 
+  const [showAiModal, setShowAiModal] = useState(false); 
+  const [aiAction, setAiAction] = useState("suggestion"); 
+  const [aiResponse, setAiResponse] = useState(""); 
+
+
+  const isNestedRouteActive = location.pathname.startsWith('/dashboard/') && location.pathname !== '/dashboard' && location.pathname !== '/dashboard/';
+
+
   useEffect(() => {
     if (showNotebookModal) {
       fetchNotebooks();
@@ -69,7 +75,7 @@ function Dashboard() {
   
       let formattedResponse;
       if (Array.isArray(response.data.response)) {
-        // Remove unnecessary newline characters and join cases
+    
         formattedResponse = response.data.response
           .map((testCase, index) => `Test Case ${index + 1}:\n${testCase.replace(/\n/g, ' ')}`)
           .join("\n\n");
@@ -99,7 +105,7 @@ const handleSaveSuggestion = async () => {
 
   try {
     const token = localStorage.getItem("token");
-    // Replace the URL with the endpoint for saving suggestions
+   
     await axios.post(
       `${BASE_URL}api/suggestions/create`,
       { code: code,
@@ -119,6 +125,8 @@ const handleSaveSuggestion = async () => {
  
 
   const handleRun = async () => {
+    setOutput(""); 
+    setError(""); 
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -130,10 +138,12 @@ const handleSaveSuggestion = async () => {
           },
         }
       );
-      setOutput(response.data.output);
-    } catch (error) {
-      console.error(error.response?.data?.message || "Error running code");
-      setOutput(error.response?.data?.message || "Something went wrong");
+      setOutput(response.data.output); 
+    } catch (err) { 
+      console.error(err.response?.data?.message || "Error running code");
+    
+      setError(err.response?.data?.message || "Something went wrong"); 
+      setOutput(""); 
     }
   };
 
@@ -203,30 +213,44 @@ const handleSaveSuggestion = async () => {
       {/* Sidebar */}
       <div className="w-1/5 bg-gradient-to-b from-gray-800 to-gray-900 text-white flex flex-col justify-between border-r border-gray-700">
         <div>
-          <h2 className="text-center text-3xl font-bold py-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+          <h2 className="text-center text-3xl font-bold py-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 cursor-pointer" onClick={() => navigate('/dashboard')}>
             LabBuddy
           </h2>
           <ul className="mt-8 space-y-2">
-            <li
-              className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
-              onClick={() => navigate("/snippets")}
-            >
-              <span className="text-blue-400">📚</span>
-              <span>Snippets</span>
-            </li>
-            <li
-              className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
-              onClick={() => navigate("/notebooks")}
-            >
-              <span className="text-purple-400">📓</span>
-              <span>Notebooks</span>
-            </li>
+             <li
+               className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
+               onClick={() => navigate("/dashboard")}
+             >
+               <span>🏠</span>
+               <span>Dashboard</span>
+             </li>
+             <li
+               className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
+               onClick={() => navigate("/snippets")}
+             >
+               <span className="text-blue-400">📚</span>
+               <span>Snippets</span>
+             </li>
+             <li 
+               className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
+               onClick={() => navigate("/notebooks")}
+             >
+               <span className="text-purple-400">📓</span>
+               <span>Notebooks</span>
+             </li>
             <li 
               className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
               onClick={() => navigate("/suggestions")}
             >
               <span className="text-green-400">💡</span>
               <span>Suggestions</span>
+            </li>
+            <li 
+              className="px-6 py-3 mx-4 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-all duration-300 flex items-center space-x-2"
+              onClick={() => navigate("/dashboard/chat")} 
+            >
+              <span className="text-cyan-400">💬</span>
+              <span>Group Chat</span>
             </li>
           </ul>
         </div>
@@ -239,90 +263,95 @@ const handleSaveSuggestion = async () => {
         </button>
       </div>
 
-      {/* Main Area */}
-      <div className="w-4/5 flex flex-col bg-gray-900">
-        <div className="h-[60%] border-b border-gray-700">
-          <Editor
-            height="100%"
-            language={language}
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            theme="vs-dark"
-            options={{
-              fontSize: 14,
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              padding: { top: 10 }
-            }}
-          />
-        </div>
-
-        <div className="p-6 bg-gray-800/50">
-          <label className="block mb-2 text-gray-300 font-medium">Input (Optional):</label>
-          <textarea
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            className="w-full h-24 p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="Enter input for the program..."
-          ></textarea>
-        </div>
-
-        <div className="p-6 flex justify-between items-center bg-gray-800/30">
-          <div className="flex items-center space-x-4">
-            <label className="text-gray-300">Language:</label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-gray-800 text-gray-300 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="python">Python</option>
-              <option value="javascript">JavaScript</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
-              <option value="c">C</option>
-            </select>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={handleRun}
-              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
-            >
-              <span>▶️</span>
-              <span>Run</span>
-            </button>
-            <button 
-              onClick={() => setShowAiModal(true)}
-              className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
-            >
-              <span>🤖</span>
-              <span>AI Help</span>
-            </button>
-            <button
-              onClick={() => setShowSnippetModal(true)}
-              className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
-            >
-              <span>💾</span>
-              <span>Save Snippet</span>
-            </button>
-            <button
-              onClick={() => setShowNotebookModal(true)}
-              className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
-            >
-              <span>📓</span>
-              <span>Save in Notebook</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 bg-gray-800/10">
-          <h3 className="text-gray-300 font-medium mb-2">Output:</h3>
-          <pre className="bg-gray-800 text-gray-300 p-4 rounded-lg overflow-auto whitespace-pre-wrap break-words border border-gray-700" style={{ maxHeight: "200px" }}>
-            {output || error}
-          </pre>
-        </div>
+    
+      <div className="w-4/5 flex flex-col bg-gray-900 p-4"> 
+        {isNestedRouteActive ? (
+          <Outlet /> 
+        ) : (
+         
+          <>
+            <div className="h-[60%] border-b border-gray-700">
+              <Editor
+                 height="100%"
+                 language={language}
+                 value={code}
+                 onChange={(value) => setCode(value || "")}
+                 theme="vs-dark"
+                 options={{
+                     fontSize: 14,
+                     minimap: { enabled: false },
+                     scrollBeyondLastLine: false,
+                     padding: { top: 10 } 
+                 }}
+              />
+            </div>
+            
+            <div className="p-6 bg-gray-800/50">
+                 <label className="block mb-2 text-gray-300 font-medium">Input (Optional):</label>
+                 <textarea
+                     value={userInput}
+                     onChange={(e) => setUserInput(e.target.value)}
+                     className="w-full h-24 p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                     placeholder="Enter input for the program..."
+                 ></textarea>
+            </div>
+            <div className="p-6 flex justify-between items-center bg-gray-800/30">
+                 <div className="flex items-center space-x-4">
+                     <label className="text-gray-300">Language:</label>
+                     <select
+                         value={language}
+                         onChange={(e) => setLanguage(e.target.value)}
+                         className="bg-gray-800 text-gray-300 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                     >
+                         <option value="python">Python</option>
+                         <option value="javascript">JavaScript</option>
+                         <option value="java">Java</option>
+                         <option value="cpp">C++</option>
+                         <option value="c">C</option>
+                     </select>
+                 </div>
+                 <div className="flex space-x-3">
+                     <button
+                         onClick={handleRun}
+                         className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
+                     >
+                         <span>▶️</span>
+                         <span>Run</span>
+                     </button>
+                     <button 
+                         onClick={() => setShowAiModal(true)}
+                         className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
+                     >
+                         <span>🤖</span>
+                         <span>AI Help</span>
+                     </button>
+                     <button
+                         onClick={() => setShowSnippetModal(true)}
+                         className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
+                     >
+                         <span>💾</span>
+                         <span>Save Snippet</span>
+                     </button>
+                     <button
+                         onClick={() => { fetchNotebooks(); setShowNotebookModal(true); }}
+                         className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center space-x-2"
+                     >
+                         <span>📓</span>
+                         <span>Save in Notebook</span>
+                     </button>
+                 </div>
+            </div>
+            <div className="p-6 bg-gray-800/10">
+                <h3 className="text-gray-300 font-medium mb-2">Output:</h3>
+                 <pre className={`bg-gray-800 p-4 rounded-lg overflow-auto whitespace-pre-wrap break-words border border-gray-700 ${error ? 'text-red-400' : 'text-gray-300'}`} style={{ maxHeight: "200px" }}>
+                     {error || output}
+                 </pre>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Modals with enhanced UI */}
+    
       {showSnippetModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center">
           <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-1/3 border border-gray-700">
@@ -422,13 +451,13 @@ const handleSaveSuggestion = async () => {
                   <ReactMarkdown 
                     className="text-gray-200"
                     components={{
-                      p: ({node, ...props}) => (
+                      p: ({_node, ...props}) => (
                         <p className="mb-4" {...props} />
                       ),
-                      pre: ({node, ...props}) => (
+                      pre: ({_node, ...props}) => (
                         <pre className="bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4 whitespace-pre-wrap" {...props} />
                       ),
-                      code: ({node, inline, ...props}) => (
+                      code: ({_node, inline, ...props}) => (
                         inline ? 
                           <code className="bg-gray-800 px-1 py-0.5 rounded" {...props} /> :
                           <code className="block text-sm font-mono" {...props} />

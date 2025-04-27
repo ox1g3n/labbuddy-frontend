@@ -10,6 +10,7 @@ function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [semester, setSemester] = useState(1);
+  const [branch, setBranch] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -27,6 +28,7 @@ function Signup() {
         password,
         confirmPassword,
         semester,
+        branch,
       });
       navigate("/");
     } catch (err) {
@@ -94,6 +96,18 @@ function Signup() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Branch</label>
+              <input
+                type="text"
+                value={branch}
+                onChange={(e) => setBranch(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter your branch (e.g., cse, ece)"
+                required
+              />
             </div>
 
             <div className="space-y-2">

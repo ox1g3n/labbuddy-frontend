@@ -15,9 +15,12 @@ function Login() {
        `${BASE_URL}api/auth/login`,
         { email, password }
       );
-      if (response?.data?.token) {
-        localStorage.setItem("token", response?.data?.token);
+      if (response?.data?.token && response?.data?.user?._id) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("userId", response.data.user._id);
         navigate("/dashboard");
+      } else {
+        setError(response?.data?.message || "Login failed: Invalid response.");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
