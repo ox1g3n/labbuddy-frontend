@@ -179,8 +179,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ashutosh-ky/labbuddy-frontend:latest
-            ashutosh-ky/labbuddy-frontend:${{ github.sha }}
+            ak956901/labbuddy-frontend:latest
+            ak956901/labbuddy-frontend:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
