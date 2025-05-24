@@ -9,7 +9,7 @@ import {
   FaPlus,
   FaSearch,
 } from "react-icons/fa";
-
+//ss
 const Snippet = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [snippets, setSnippets] = useState([]);
