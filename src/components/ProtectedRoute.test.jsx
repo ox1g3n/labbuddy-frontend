@@ -1,85 +1,83 @@
-import { render, screen } from "@testing-library/react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ProtectedRoute from "../../../labbuddy-frontend/src/components/ProtectedRoute";
+import React from 'react'; // Add this line
+import { render, screen } from '@testing-library/react';
+import {
+  MemoryRouter,
+  Routes,
+  Route,
+  Navigate as OriginalNavigate,
+} from 'react-router-dom'; // Import actual components
+import ProtectedRoute from './ProtectedRoute';
 import PropTypes from 'prop-types';
 
+// Mock Navigate using jest.fn() for more control
+const mockNavigate = jest.fn();
 
-jest.mock("react-router-dom", () => ({
-  ...jest.requireActual("react-router-dom"),
-  Navigate: MockedNavigate,
-}));
+jest.mock('react-router-dom', () => {
+  const originalModule = jest.requireActual('react-router-dom');
+  return {
+    ...originalModule,
+    Navigate: (props) => {
+      mockNavigate(props); // Call our mock function with Navigate's props
+      return <div data-testid='navigate' data-to={props.to}></div>; // Render a simple div for testing
+    },
+  };
+});
 
-// Add PropTypes to the mocked Navigate component
-const MockedNavigate = ({ to }) => <div data-testid="navigate" data-to={to}></div>;
-
-MockedNavigate.propTypes = {
-  to: PropTypes.string.isRequired,
-};
-
-describe("ProtectedRoute", () => {
+describe('ProtectedRoute', () => {
   const TestComponent = () => <div>Protected Content</div>;
 
   beforeEach(() => {
-    // Clear localStorage before each test
+    // Clear localStorage and reset mocks before each test
     localStorage.clear();
+    mockNavigate.mockClear(); // Clear the mockNavigate calls
   });
 
-  it("should render children if token exists in localStorage", () => {
-    localStorage.setItem("token", "fake-token");
+  it('should render children if token exists in localStorage', () => {
+    localStorage.setItem('token', 'fake-token');
 
     render(
-      <BrowserRouter>
+      <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
           <Route
-            path="/dashboard"
+            path='/dashboard'
             element={
               <ProtectedRoute>
                 <TestComponent />
               </ProtectedRoute>
             }
           />
+          <Route path='/' element={<div>Login Page</div>} />
         </Routes>
-      </BrowserRouter>,
-      {
-        wrapper: ({ children }) => <Routes>{children}</Routes>,
-        initialEntries: ["/dashboard"],
-      },
-    ); // Use initialEntries to simulate navigation
-
-    expect(screen.getByText("Protected Content")).toBeInTheDocument();
-    expect(screen.queryByTestId("navigate")).not.toBeInTheDocument(); // Ensure Navigate was not rendered
-  });
-
-  it("should navigate to login page if token does not exist", () => {
-    render(
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <TestComponent />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<div>Login Page</div>} />{" "}
-          {/* Add a route for the redirect */}
-        </Routes>
-      </BrowserRouter>,
-      {
-        wrapper: ({ children }) => <Routes>{children}</Routes>,
-        initialEntries: ["/dashboard"],
-      },
+      </MemoryRouter>
     );
 
-    // Check if Navigate component was rendered with the correct 'to' prop
-    const navigateElement = screen.getByTestId("navigate");
-    expect(navigateElement).toBeInTheDocument();
-    expect(navigateElement).toHaveAttribute("data-to", "/");
-
-    // You might also assert that the protected content is NOT rendered
-    expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled(); // Ensure Navigate was not called
   });
 
-  // You might want to add more tests for edge cases or different routes
+  it("should call Navigate with to='/' if token does not exist", () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route
+            path='/dashboard'
+            element={
+              <ProtectedRoute>
+                <TestComponent />
+              </ProtectedRoute>
+            }
+          />
+          <Route path='/' element={<div>Login Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Check if our mockNavigate was called with the correct props
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/' });
+    expect(screen.getByTestId('navigate')).toBeInTheDocument(); // Check if the placeholder div is rendered
+    expect(screen.getByTestId('navigate')).toHaveAttribute('data-to', '/');
+
+    // You might also assert that the protected content is NOT rendered
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
 });
