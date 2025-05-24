@@ -1,25 +1,29 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import SnippetModal from "./SnippetModal";
 
 function SnippetList() {
-  const BASE_URL=import.meta.env.VITE_BASE_URL;
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [snippets, setSnippets] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
 
-  const fetchSnippets = async () => {
+  const fetchSnippets = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${BASE_URL}api/snippets`, {
+      const response = await axios.get(`${BASE_URL}api/snippets/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setSnippets(response.data.snippets);
+      setSnippets(response.data);
     } catch (error) {
-      console.error("Error fetching snippets:", error.response?.data || error);
+      console.error("Error fetching snippets:", error);
     }
-  };
+  }, [BASE_URL]);
+
+  useEffect(() => {
+    fetchSnippets();
+  }, [fetchSnippets]);
 
   const handleSaveSnippet = async ({ name, code }) => {
     try {
@@ -31,7 +35,7 @@ function SnippetList() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       setSnippets([...snippets, response.data.snippets]);
     } catch (error) {
@@ -39,19 +43,16 @@ function SnippetList() {
     }
   };
 
-  useEffect(() => {
-    fetchSnippets();
-  }, []);
+  // Implementation of handleDeleteSnippet function
+  // const handleDeleteSnippet = async (id) => {
+  // };
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Your Snippets</h1>
       <ul className="mb-4">
         {snippets.map((snippet) => (
-          <li
-            key={snippet._id}
-            className="p-2 border-b border-gray-300 mb-2"
-          >
+          <li key={snippet._id} className="p-2 border-b border-gray-300 mb-2">
             <h3 className="font-semibold">{snippet.name}</h3>
             <pre className="bg-gray-100 p-2 rounded">{snippet.code}</pre>
           </li>

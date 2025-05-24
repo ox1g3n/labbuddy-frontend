@@ -1,5 +1,5 @@
 # Base image
-FROM docker.io/library/node:18
+FROM node:18
 
 
 # Set working directory

@@ -27,12 +27,14 @@ A modern, React-based frontend application for LabBuddy - your intelligent labor
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd labbuddy-frontend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -42,21 +44,27 @@ A modern, React-based frontend application for LabBuddy - your intelligent labor
 ### Available Scripts
 
 - **Development server:**
+
   ```bash
   npm run dev
   ```
+
   Starts the development server with hot-reload at localhost
 
 - **Build for production:**
+
   ```bash
   npm run build
   ```
+
   Creates an optimized production build in the `dist` directory
 
 - **Lint code:**
+
   ```bash
   npm run lint
   ```
+
   Runs ESLint to check for code quality and style issues
 
 - **Preview production build:**
@@ -102,11 +110,13 @@ labbuddy-frontend/
 The frontend interacts with the backend through the following API endpoints:
 
 ### Authentication
+
 - `POST /api/auth/signup` - User registration
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
 
 ### Notebooks
+
 - `GET /api/notebooks` - Fetch all notebooks
 - `POST /api/notebooks` - Create new notebook
 - Operations on specific notebooks:
@@ -116,6 +126,7 @@ The frontend interacts with the backend through the following API endpoints:
   - Delete notebook
 
 ### Code Snippets
+
 - `GET /api/snippets` - Fetch all code snippets
 - `POST /api/snippets` - Create new code snippet
 - Operations on specific snippets:
@@ -123,18 +134,23 @@ The frontend interacts with the backend through the following API endpoints:
   - Delete snippet
 
 ### AI Suggestions
+
 - `GET /api/suggestions` - Get AI-powered suggestions
 - `POST /api/suggestions` - Submit code for AI analysis
 
 ### API Configuration
+
 The application uses Axios for API requests. All API calls include:
+
 - Authentication headers
 - Error handling
 - Loading states
 - Toast notifications for success/error feedback
 
 ### Environment Variables
+
 Required environment variables for API integration:
+
 ```
 VITE_API_BASE_URL=your_api_base_url
 ```
