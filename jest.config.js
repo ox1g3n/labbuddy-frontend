@@ -1,3 +1,4 @@
+/** @type {import('jest').Config} */
 export default {
   // Test environment for React components
   testEnvironment: 'jsdom',
