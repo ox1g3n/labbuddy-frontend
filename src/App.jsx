@@ -7,7 +7,7 @@ import Snippet from './pages/Snippet.jsx';
 import Notebooks from './pages/Notebooks.jsx';
 import Suggestions from './pages/Suggestions.jsx';
 import GroupChat from './components/GroupChat.jsx';
-
+//newapp
 const App = () => {
   return (
     <Router>
