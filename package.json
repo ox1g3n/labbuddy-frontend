@@ -13,6 +13,8 @@
     "format:check": "prettier --check \"**/*.{js,jsx,json,md,css}\""
   },
   "dependencies": {
+    "@logtail/browser": "^0.5.4",
+    "@logtail/js": "^0.5.5",
     "@monaco-editor/react": "^4.6.0",
     "axios": "^1.7.9",
     "html2pdf.js": "^0.10.2",
