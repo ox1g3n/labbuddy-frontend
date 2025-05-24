@@ -172,12 +172,20 @@ jobs:
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
+        env:
+          DOCKER_BUILDKIT: 1
         with:
-          context: ./
+          context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/labbuddy-frontend:latest
+          tags: |
+            ashutosh-ky/labbuddy-frontend:latest
+            ashutosh-ky/labbuddy-frontend:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
