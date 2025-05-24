@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../../../labbuddy-frontend/src/components/ProtectedRoute";
 import PropTypes from 'prop-types';
 
-// Mock react-router-dom's Navigate
+
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
   Navigate: MockedNavigate,
