@@ -26,10 +26,12 @@ class LocalStorageMock {
 import { TextEncoder, TextDecoder } from 'util';
 
 // Mock fetch
-global.fetch = jest.fn(() => Promise.resolve({
-  ok: true,
-  json: () => Promise.resolve({}),
-}));
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  })
+);
 
 // Define global objects for the test environment
 Object.defineProperty(global, 'localStorage', {
