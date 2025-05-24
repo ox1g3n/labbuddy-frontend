@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom';
+import { jest } from '@jest/globals';
+import { TextEncoder, TextDecoder } from 'util';
 
 class LocalStorageMock {
   constructor() {
@@ -21,9 +23,6 @@ class LocalStorageMock {
     delete this.store[key];
   }
 }
-
-// Import TextEncoder and TextDecoder before using them
-import { TextEncoder, TextDecoder } from 'util';
 
 // Mock fetch
 global.fetch = jest.fn(() =>
