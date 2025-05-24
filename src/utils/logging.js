@@ -1,4 +1,4 @@
-import { Browser } from '@logtail/browser';
+import { LogtailBrowser } from '@logtail/browser';
 
 let logtail = null;
 
@@ -11,7 +11,7 @@ export const initializeLogging = () => {
   }
 
   try {
-    logtail = new Browser(import.meta.env.VITE_LOGTAIL_SOURCE_TOKEN);
+    logtail = new LogtailBrowser(import.meta.env.VITE_LOGTAIL_SOURCE_TOKEN);
 
     // Add context information to all logs
     logtail.use({
