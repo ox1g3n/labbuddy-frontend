@@ -1,10 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import React from "react";
 
 function Signup() {
-  const BASE_URL=import.meta.env.VITE_BASE_URL;
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,7 +58,9 @@ function Signup() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Full Name</label>
+              <label className="text-sm font-medium text-gray-300">
+                Full Name
+              </label>
               <input
                 type="text"
                 value={name}
@@ -83,7 +84,9 @@ function Signup() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Semester</label>
+              <label className="text-sm font-medium text-gray-300">
+                Semester
+              </label>
               <select
                 value={semester}
                 onChange={(e) => setSemester(Number(e.target.value))}
@@ -99,7 +102,9 @@ function Signup() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Branch</label>
+              <label className="text-sm font-medium text-gray-300">
+                Branch
+              </label>
               <input
                 type="text"
                 value={branch}
@@ -111,7 +116,9 @@ function Signup() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Password</label>
+              <label className="text-sm font-medium text-gray-300">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -123,7 +130,9 @@ function Signup() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Confirm Password</label>
+              <label className="text-sm font-medium text-gray-300">
+                Confirm Password
+              </label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -142,11 +151,11 @@ function Signup() {
             </button>
 
             <div className="text-center">
-              <a
-                href="/"
-                className="text-sm text-gray-400 hover:text-gray-300"
-              >
-                Already have an account? <span className="text-blue-400 hover:text-blue-300 font-medium">Login</span>
+              <a href="/" className="text-sm text-gray-400 hover:text-gray-300">
+                Already have an account?{" "}
+                <span className="text-blue-400 hover:text-blue-300 font-medium">
+                  Login
+                </span>
               </a>
             </div>
           </form>

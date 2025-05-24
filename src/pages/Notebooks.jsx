@@ -1,136 +1,151 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { FaBook, FaPlus, FaTrash, FaChevronDown, FaChevronUp, FaChevronLeft, FaTimes, FaCode, FaSearch, FaDownload } from 'react-icons/fa';
-import html2pdf from 'html2pdf.js';
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  FaBook,
+  FaPlus,
+  FaTrash,
+  FaChevronDown,
+  FaChevronUp,
+  FaChevronLeft,
+  FaTimes,
+  FaCode,
+  FaSearch,
+  FaDownload,
+} from "react-icons/fa";
+import html2pdf from "html2pdf.js";
 
-const Notebooks = () => {
-  const BASE_URL=import.meta.env.VITE_BASE_URL;
+function Notebooks() {
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [notebooks, setNotebooks] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [expandedNotebookId, setExpandedNotebookId] = useState(null);
-  const [newNotebookName, setNewNotebookName] = useState('');
-  const [newQA, setNewQA] = useState({ question: '', language: '', code: '' });
+  const [newNotebookName, setNewNotebookName] = useState("");
+  const [newQA, setNewQA] = useState({ question: "", language: "", code: "" });
   const [selectedNotebookId, setSelectedNotebookId] = useState(null);
   const [showNotebookModal, setShowNotebookModal] = useState(false);
   const [showQAModal, setShowQAModal] = useState(false);
   const navigate = useNavigate();
 
-  const authToken = localStorage.getItem('token');
+  const fetchNotebooks = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${BASE_URL}api/notebooks`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setNotebooks(response.data.notebooks || []);
+    } catch (error) {
+      console.error("Error fetching notebooks:", error.response?.data?.message || error.message);
+    }
+  }, [BASE_URL]);
 
   useEffect(() => {
     fetchNotebooks();
-  }, []);
-
-  const fetchNotebooks = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}api/notebooks/`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      setNotebooks(response.data.notebooks);
-    } catch (error) {
-      console.error('Error fetching notebooks:', error);
-    }
-  };
+  }, [fetchNotebooks]);
 
   const createNotebook = async () => {
-    if (!newNotebookName.trim()) return alert('Notebook name is required');
+    if (!newNotebookName.trim()) return alert("Notebook name is required");
     try {
       await axios.post(
         `${BASE_URL}api/notebooks/create`,
         { name: newNotebookName },
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       fetchNotebooks();
       setShowNotebookModal(false);
-      setNewNotebookName('');
+      setNewNotebookName("");
     } catch (error) {
-      console.error('Error creating notebook:', error);
+      console.error("Error creating notebook:", error);
     }
   };
 
   const deleteNotebook = async (notebookId) => {
-    if (!window.confirm('Are you sure you want to delete this notebook?')) return;
-    
+    if (!window.confirm("Are you sure you want to delete this notebook?"))
+      return;
+
     try {
       await axios.post(
         `${BASE_URL}api/notebooks/delete`,
         { notebookId },
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       fetchNotebooks();
     } catch (error) {
-      console.error('Error deleting notebook:', error);
+      console.error("Error deleting notebook:", error);
     }
   };
 
   const toggleNotebook = (notebookId) => {
-    setExpandedNotebookId(notebookId === expandedNotebookId ? null : notebookId);
+    setExpandedNotebookId(
+      notebookId === expandedNotebookId ? null : notebookId,
+    );
   };
 
   const createQA = async () => {
     const { question, language, code } = newQA;
     if (!question || !language || !code)
-      return alert('Please fill out all fields to create a QA');
+      return alert("Please fill out all fields to create a QA");
     try {
       await axios.post(
         `${BASE_URL}api/qa/createQA`,
         { ...newQA, nbid: selectedNotebookId },
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       fetchNotebooks();
       setShowQAModal(false);
-      setNewQA({ question: '', language: '', code: '' });
+      setNewQA({ question: "", language: "", code: "" });
     } catch (error) {
-      console.error('Error creating QA:', error);
+      console.error("Error creating QA:", error);
     }
   };
 
   const deleteQA = async (qaId) => {
-    if (!window.confirm('Are you sure you want to delete this QA?')) return;
-    
+    if (!window.confirm("Are you sure you want to delete this QA?")) return;
+
     try {
       await axios.post(
         `${BASE_URL}api/qa/delete`,
         { qaId },
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       fetchNotebooks();
     } catch (error) {
-      console.error('Error deleting QA:', error);
+      console.error("Error deleting QA:", error);
     }
   };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Code copied to clipboard!');
+    alert("Code copied to clipboard!");
   };
 
   const exportToPdf = async (notebook) => {
     // Create a temporary div for the content
-    const content = document.createElement('div');
+    const content = document.createElement("div");
     content.innerHTML = `
       <div style="padding: 20px; font-family: Arial, sans-serif;">
         <h1 style="color: #2563eb; margin-bottom: 20px;">${notebook.name}</h1>
-        ${notebook.qa.map((qa, index) => `
+        ${notebook.qa
+          .map(
+            (qa, index) => `
           <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
             <h3 style="color: #1e40af; margin-bottom: 10px;">Question ${index + 1}: ${qa.question}</h3>
             <div style="margin-bottom: 10px;">
@@ -140,23 +155,25 @@ const Notebooks = () => {
               ${qa.code}
             </div>
           </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
     `;
 
     const opt = {
       margin: 1,
-      filename: `${notebook.name.replace(/\s+/g, '_')}_notebook.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      filename: `${notebook.name.replace(/\s+/g, "_")}_notebook.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
     };
 
     try {
       await html2pdf().from(content).set(opt).save();
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
     }
   };
 
@@ -167,7 +184,7 @@ const Notebooks = () => {
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
               className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 border border-gray-700"
             >
               <FaChevronLeft className="text-blue-400" />
@@ -205,13 +222,15 @@ const Notebooks = () => {
           <div className="text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700">
             <FaBook className="mx-auto text-4xl text-gray-600 mb-4" />
             <p className="text-xl text-gray-400">No notebooks found</p>
-            <p className="text-gray-500 mt-2">Create your first notebook to start organizing your code</p>
+            <p className="text-gray-500 mt-2">
+              Create your first notebook to start organizing your code
+            </p>
           </div>
         ) : (
           <div className="grid gap-6">
             {notebooks
               .filter((notebook) =>
-                notebook.name.toLowerCase().includes(searchTerm.toLowerCase())
+                notebook.name.toLowerCase().includes(searchTerm.toLowerCase()),
               )
               .map((notebook) => (
                 <div
@@ -226,7 +245,8 @@ const Notebooks = () => {
                       <FaBook className="text-blue-400" />
                       <h3 className="text-lg font-semibold">{notebook.name}</h3>
                       <span className="text-sm text-gray-500">
-                        ({notebook.qa.length} {notebook.qa.length === 1 ? 'item' : 'items'})
+                        ({notebook.qa.length}{" "}
+                        {notebook.qa.length === 1 ? "item" : "items"})
                       </span>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -259,7 +279,11 @@ const Notebooks = () => {
                       >
                         <FaDownload />
                       </button>
-                      {expandedNotebookId === notebook._id ? <FaChevronUp /> : <FaChevronDown />}
+                      {expandedNotebookId === notebook._id ? (
+                        <FaChevronUp />
+                      ) : (
+                        <FaChevronDown />
+                      )}
                     </div>
                   </div>
 
@@ -272,9 +296,14 @@ const Notebooks = () => {
                       ) : (
                         <div className="divide-y divide-gray-700">
                           {notebook.qa.map((qa) => (
-                            <div key={qa._id} className="p-6 hover:bg-gray-700/30">
+                            <div
+                              key={qa._id}
+                              className="p-6 hover:bg-gray-700/30"
+                            >
                               <div className="flex justify-between items-start mb-4">
-                                <h4 className="text-lg font-medium text-blue-400">{qa.question}</h4>
+                                <h4 className="text-lg font-medium text-blue-400">
+                                  {qa.question}
+                                </h4>
                                 <button
                                   onClick={() => deleteQA(qa._id)}
                                   className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors duration-300"
@@ -283,7 +312,9 @@ const Notebooks = () => {
                                 </button>
                               </div>
                               <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                                <div className="mb-2 text-sm text-gray-500">Language: {qa.language}</div>
+                                <div className="mb-2 text-sm text-gray-500">
+                                  Language: {qa.language}
+                                </div>
                                 <pre className="text-sm font-mono overflow-x-auto">
                                   {qa.code}
                                 </pre>
@@ -312,7 +343,9 @@ const Notebooks = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-1/3 border border-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-200">Create New Notebook</h2>
+              <h2 className="text-2xl font-bold text-gray-200">
+                Create New Notebook
+              </h2>
               <button
                 onClick={() => setShowNotebookModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-300"
@@ -360,20 +393,28 @@ const Notebooks = () => {
             </div>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Question</label>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Question
+                </label>
                 <input
                   type="text"
                   value={newQA.question}
-                  onChange={(e) => setNewQA({ ...newQA, question: e.target.value })}
+                  onChange={(e) =>
+                    setNewQA({ ...newQA, question: e.target.value })
+                  }
                   placeholder="Enter your question"
                   className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Language</label>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Language
+                </label>
                 <select
                   value={newQA.language}
-                  onChange={(e) => setNewQA({ ...newQA, language: e.target.value })}
+                  onChange={(e) =>
+                    setNewQA({ ...newQA, language: e.target.value })
+                  }
                   className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Language</option>
@@ -385,7 +426,9 @@ const Notebooks = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Code</label>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Code
+                </label>
                 <textarea
                   value={newQA.code}
                   onChange={(e) => setNewQA({ ...newQA, code: e.target.value })}
@@ -413,6 +456,6 @@ const Notebooks = () => {
       )}
     </div>
   );
-};
+}
 
 export default Notebooks;
