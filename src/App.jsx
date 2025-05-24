@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Snippet from "./pages/Snippet.jsx";
 import Notebooks from "./pages/Notebooks.jsx";
 import Suggestions from "./pages/Suggestions.jsx";
+import GroupChat from "./components/GroupChat.jsx";
 
 const App = () => {
   return (
@@ -21,7 +22,9 @@ const App = () => {
               <Dashboard />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="chat" element={<GroupChat />} />
+        </Route>
         <Route
           path="/snippets"
           element={
