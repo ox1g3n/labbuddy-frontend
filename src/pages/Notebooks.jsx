@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import {
   FaBook,
   FaPlus,
@@ -14,11 +15,13 @@ import {
   FaDownload,
 } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
+import { createNotebookPDFTemplate } from '../utils/pdfFormatters';
 
 function Notebooks() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [notebooks, setNotebooks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setLoading] = useState(false);
   const [expandedNotebookId, setExpandedNotebookId] = useState(null);
   const [newNotebookName, setNewNotebookName] = useState('');
   const [newQA, setNewQA] = useState({ question: '', language: '', code: '' });
@@ -141,42 +144,33 @@ function Notebooks() {
   };
 
   const exportToPdf = async (notebook) => {
-    // Create a temporary div for the content
-    const content = document.createElement('div');
-    content.innerHTML = `
-      <div style="padding: 20px; font-family: Arial, sans-serif;">
-        <h1 style="color: #2563eb; margin-bottom: 20px;">${notebook.name}</h1>
-        ${notebook.qa
-          .map(
-            (qa, index) => `
-          <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-            <h3 style="color: #1e40af; margin-bottom: 10px;">Question ${index + 1}: ${qa.question}</h3>
-            <div style="margin-bottom: 10px;">
-              <strong>Language:</strong> ${qa.language}
-            </div>
-            <div style="background-color: #f1f1f1; padding: 10px; border-radius: 4px; font-family: monospace;">
-              ${qa.code}
-            </div>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-    `;
-
-    const opt = {
-      margin: 1,
-      filename: `${notebook.name.replace(/\s+/g, '_')}_notebook.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-    };
-
+    let element = null;
     try {
-      await html2pdf().from(content).set(opt).save();
+      setLoading(true);
+      toast.loading('Generating PDF...', { id: 'pdf-export' });
+
+      element = document.createElement('div');
+      element.innerHTML = createNotebookPDFTemplate(notebook);
+      document.body.appendChild(element);
+
+      const opt = {
+        filename: `${notebook.name.replace(/\s+/g, '_')}_notebook.pdf`,
+        margin: [10, 10, 10, 10],
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 1 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      };
+
+      await html2pdf().from(element).set(opt).save();
+      toast.success('PDF exported successfully!', { id: 'pdf-export' });
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      console.error('PDF export error:', error);
+      toast.error('Failed to export PDF', { id: 'pdf-export' });
+    } finally {
+      if (element && element.parentNode) {
+        document.body.removeChild(element);
+      }
+      setLoading(false);
     }
   };
 
@@ -277,10 +271,15 @@ function Notebooks() {
                           e.stopPropagation();
                           exportToPdf(notebook);
                         }}
-                        className='p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors duration-300'
+                        disabled={isLoading}
+                        className={`p-2 ${isLoading ? 'text-gray-500' : 'text-blue-400 hover:bg-blue-500/10'} rounded-lg transition-colors duration-300`}
                         title='Export to PDF'
                       >
-                        <FaDownload />
+                        {isLoading ? (
+                          <span className='inline-block animate-spin'>↻</span>
+                        ) : (
+                          <FaDownload />
+                        )}
                       </button>
                       {expandedNotebookId === notebook._id ? (
                         <FaChevronUp />

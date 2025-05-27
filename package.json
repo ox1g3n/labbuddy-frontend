@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config=jest.config.js --detectOpenHandles --forceExit --maxWorkers=50%",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --config=jest.config.cjs --detectOpenHandles --forceExit --maxWorkers=50%",
     "format": "prettier --write \"**/*.{js,jsx,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,json,md,css}\""
   },

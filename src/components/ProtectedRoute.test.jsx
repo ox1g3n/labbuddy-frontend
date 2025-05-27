@@ -1,40 +1,70 @@
-import React from 'react'; // Add this line
-import { render, screen } from '@testing-library/react';
-import {
-  MemoryRouter,
-  Routes,
-  Route,
-  Navigate as OriginalNavigate,
-} from 'react-router-dom'; // Import actual components
-import ProtectedRoute from './ProtectedRoute';
-import PropTypes from 'prop-types';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-// Mock Navigate using jest.fn() for more control
+// Mock the api module
+jest.mock('../utils/api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+  },
+}));
+
+// Mock Navigate
 const mockNavigate = jest.fn();
-
 jest.mock('react-router-dom', () => {
   const originalModule = jest.requireActual('react-router-dom');
   return {
     ...originalModule,
     Navigate: (props) => {
-      mockNavigate(props); // Call our mock function with Navigate's props
-      return <div data-testid='navigate' data-to={props.to}></div>; // Render a simple div for testing
+      mockNavigate(props);
+      // eslint-disable-next-line react/prop-types
+      return <div data-testid='navigate' data-to={props.to}></div>;
     },
   };
 });
+
+// Import after mocking
+import ProtectedRoute from './ProtectedRoute';
+import api from '../utils/api';
+
+const mockApi = jest.mocked(api);
 
 describe('ProtectedRoute', () => {
   const TestComponent = () => <div>Protected Content</div>;
 
   beforeEach(() => {
-    // Clear localStorage and reset mocks before each test
     localStorage.clear();
-    mockNavigate.mockClear(); // Clear the mockNavigate calls
+    mockNavigate.mockClear();
+    mockApi.get.mockClear();
   });
 
-  it('should render children if token exists in localStorage', () => {
-    localStorage.setItem('token', 'fake-token');
+  test('should render children if token exists and API verification succeeds', async () => {
+    mockApi.get.mockResolvedValue({ data: { valid: true } });
+    localStorage.setItem('token', 'valid-token');
 
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route
+            path='/'
+            element={
+              <ProtectedRoute>
+                <TestComponent />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Protected Content')).toBeInTheDocument();
+    });
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('should redirect to login if no token exists', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
@@ -51,33 +81,36 @@ describe('ProtectedRoute', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Protected Content')).toBeInTheDocument();
-    expect(mockNavigate).not.toHaveBeenCalled(); // Ensure Navigate was not called
-  });
-
-  it("should call Navigate with to='/' if token does not exist", () => {
-    render(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <Routes>
-          <Route
-            path='/dashboard'
-            element={
-              <ProtectedRoute>
-                <TestComponent />
-              </ProtectedRoute>
-            }
-          />
-          <Route path='/' element={<div>Login Page</div>} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    // Check if our mockNavigate was called with the correct props
     expect(mockNavigate).toHaveBeenCalledWith({ to: '/' });
-    expect(screen.getByTestId('navigate')).toBeInTheDocument(); // Check if the placeholder div is rendered
-    expect(screen.getByTestId('navigate')).toHaveAttribute('data-to', '/');
+    expect(screen.getByTestId('navigate')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
 
-    // You might also assert that the protected content is NOT rendered
+  test('should redirect to login if token exists but API verification fails', async () => {
+    mockApi.get.mockRejectedValue(new Error('Invalid token'));
+    localStorage.setItem('token', 'invalid-token');
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route
+            path='/dashboard'
+            element={
+              <ProtectedRoute>
+                <TestComponent />
+              </ProtectedRoute>
+            }
+          />
+          <Route path='/' element={<div>Login Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/' });
+    });
+
+    expect(screen.getByTestId('navigate')).toBeInTheDocument();
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
 });
