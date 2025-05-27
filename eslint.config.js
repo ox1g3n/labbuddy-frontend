@@ -20,12 +20,24 @@ export default [
     },
   },
 
-  // Configuration for CJS files (mocks, specific .cjs config files)
+  // Configuration for CJS files (specific .cjs config files)
   {
-    files: ['__mocks__/*.js', 'jest.config.cjs'],
+    files: ['jest.config.cjs', 'babel.config.cjs'],
     languageOptions: {
       sourceType: 'commonjs', // Override to CJS
       globals: globals.node,
+    },
+  },
+
+  // Configuration for mock files - ES modules with Jest globals
+  {
+    files: ['__mocks__/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        jest: 'readonly',
+      },
     },
   },
 

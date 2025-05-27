@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
+import api from '../utils/api';
+import { logoutAllTabs } from '../utils/storageSync';
 
 function Dashboard() {
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [language, setLanguage] = useState('python');
   const [code, setCode] = useState('');
   const [userInput, setUserInput] = useState('');
@@ -18,11 +18,37 @@ function Dashboard() {
   const [question, setQuestion] = useState('');
   const [notebooks, setNotebooks] = useState([]);
   const [selectedNotebook, setSelectedNotebook] = useState('');
+  const [templates, setTemplates] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiAction, setAiAction] = useState('suggestion');
   const [aiResponse, setAiResponse] = useState('');
+
+  // Fetch code templates
+  const fetchTemplates = useCallback(async () => {
+    try {
+      const response = await api.get('api/snippets/templates');
+      setTemplates(response.data.templates);
+      // Set initial code template if code is empty
+      if (!code && response.data.templates[language]) {
+        setCode(response.data.templates[language].code);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  }, [language, code]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  // Effect to handle initial template loading and language changes
+  useEffect(() => {
+    if (templates[language] && !code.trim()) {
+      setCode(templates[language].code);
+    }
+  }, [templates, language, code]);
 
   const isNestedRouteActive =
     location.pathname.startsWith('/dashboard/') &&
@@ -31,12 +57,7 @@ function Dashboard() {
 
   const fetchNotebooks = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${BASE_URL}api/notebooks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get('api/notebooks');
       setNotebooks(response.data.notebooks || []);
     } catch (error) {
       console.error(
@@ -44,13 +65,31 @@ function Dashboard() {
         error.response?.data?.message || error.message
       );
     }
-  }, [BASE_URL]);
+  }, []);
 
   useEffect(() => {
     if (showNotebookModal) {
       fetchNotebooks();
     }
   }, [showNotebookModal, fetchNotebooks]);
+
+  // Handle language change
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+
+    // Only load template if code is empty or user confirms the change
+    if (
+      !code.trim() ||
+      window.confirm(
+        'Do you want to load the template for the new language? This will replace your current code.'
+      )
+    ) {
+      if (templates[newLanguage]) {
+        setCode(templates[newLanguage].code);
+      }
+    }
+  };
 
   const handleAiAction = async () => {
     if (!code.trim()) {
@@ -59,23 +98,14 @@ function Dashboard() {
     }
     const toastId = toast.loading('Ai help on the way...');
     try {
-      const token = localStorage.getItem('token');
-      console.log('Token being sent to Gemini API:', token);
-
       const apiEndpoint =
         aiAction === 'suggestion'
-          ? `${BASE_URL}api/gemini/suggestions`
+          ? 'api/gemini/suggestions'
           : aiAction === 'complexity'
-            ? `${BASE_URL}api/gemini/complexity`
-            : `${BASE_URL}api/gemini/testcases`;
+            ? 'api/gemini/complexity'
+            : 'api/gemini/testcases';
 
-      const response = await axios.post(
-        apiEndpoint,
-        { code },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await api.post(apiEndpoint, { code });
 
       let formattedResponse;
       if (Array.isArray(response.data.response)) {
@@ -105,7 +135,6 @@ function Dashboard() {
     }
   };
 
-  // Function to save the suggestion
   const handleSaveSuggestion = async () => {
     if (!aiResponse.trim() || !code.trim()) {
       alert('No suggestion or code to save.');
@@ -113,17 +142,10 @@ function Dashboard() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-
-      await axios.post(
-        `${BASE_URL}api/suggestions/create`,
-        { code: code, suggestion: aiResponse },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.post('api/suggestions/create', {
+        code: code,
+        suggestion: aiResponse,
+      });
       alert('Suggestion saved successfully!');
     } catch (error) {
       console.error(
@@ -138,29 +160,29 @@ function Dashboard() {
     setOutput('');
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${BASE_URL}api/code/run`,
-        { language, code, input: userInput },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.post('api/code/run', {
+        language,
+        code,
+        input: userInput,
+      });
       setOutput(response.data.output);
     } catch (err) {
-      console.error(err.response?.data?.message || 'Error running code');
-
-      setError(err.response?.data?.message || 'Something went wrong');
+      console.error('Code execution error:', err.response?.data || err);
+      // Use the specific error message from the server if available
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message ||
+          'Something went wrong'
+      );
       setOutput('');
     }
   };
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${BASE_URL}api/auth/logout`);
-      localStorage.removeItem('token');
+      await api.post('api/auth/logout');
+      logoutAllTabs();
       navigate('/');
     } catch (error) {
       console.error(
@@ -172,16 +194,11 @@ function Dashboard() {
 
   const handleSnippetSave = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${BASE_URL}api/snippets/create`,
-        { name: snippetName, code, language },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.post('api/snippets/create', {
+        name: snippetName,
+        code,
+        language,
+      });
       setShowSnippetModal(false);
       setSnippetName('');
       alert('Snippet saved successfully!');
@@ -201,16 +218,12 @@ function Dashboard() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${BASE_URL}api/qa/createQA`,
-        { question, code, language, nbid: selectedNotebook },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.post('api/qa/createQA', {
+        question,
+        code,
+        language,
+        nbid: selectedNotebook,
+      });
       setShowNotebookModal(false);
       setQuestion('');
       setSelectedNotebook('');
@@ -319,7 +332,7 @@ function Dashboard() {
                 <label className='text-gray-300'>Language:</label>
                 <select
                   value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
+                  onChange={handleLanguageChange}
                   className='bg-gray-800 text-gray-300 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 >
                   <option value='python'>Python</option>
@@ -369,7 +382,7 @@ function Dashboard() {
                 className={`bg-gray-800 p-4 rounded-lg overflow-auto whitespace-pre-wrap break-words border border-gray-700 ${error ? 'text-red-400' : 'text-gray-300'}`}
                 style={{ maxHeight: '200px' }}
               >
-                {error || output}
+                {error || output || 'Output will appear here...'}
               </pre>
             </div>
           </>
