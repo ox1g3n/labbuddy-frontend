@@ -13,7 +13,7 @@ import Snippet from './pages/Snippet.jsx';
 import Notebooks from './pages/Notebooks.jsx';
 import Suggestions from './pages/Suggestions.jsx';
 import GroupChat from './components/GroupChat.jsx';
-
+//dep comment
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
