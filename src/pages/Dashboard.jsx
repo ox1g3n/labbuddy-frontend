@@ -38,6 +38,27 @@ function Dashboard() {
   const [suggestionPosition, setSuggestionPosition] = useState(null);
   const [editorRef, setEditorRef] = useState(null);
 
+  // Helper function to get file extension for different languages
+  const getFileExtension = (lang) => {
+    const extensions = {
+      'python': 'py',
+      'javascript': 'js',
+      'typescript': 'ts',
+      'java': 'java',
+      'cpp': 'cpp',
+      'c': 'c',
+      'go': 'go',
+      'rust': 'rs',
+      'php': 'php',
+      'ruby': 'rb',
+      'kotlin': 'kt',
+      'swift': 'swift',
+      'csharp': 'cs',
+      'sql': 'sql'
+    };
+    return extensions[lang] || lang;
+  };
+
   // Fetch code templates
   const fetchTemplates = useCallback(async () => {
     try {
@@ -486,6 +507,15 @@ function Dashboard() {
                         <option value='java' className="bg-slate-800">Java</option>
                         <option value='cpp' className="bg-slate-800">C++</option>
                         <option value='c' className="bg-slate-800">C</option>
+                        <option value='go' className="bg-slate-800">Go</option>
+                        <option value='rust' className="bg-slate-800">Rust</option>
+                        <option value='typescript' className="bg-slate-800">TypeScript</option>
+                        <option value='php' className="bg-slate-800">PHP</option>
+                        <option value='ruby' className="bg-slate-800">Ruby</option>
+                        <option value='kotlin' className="bg-slate-800">Kotlin</option>
+                        <option value='swift' className="bg-slate-800">Swift</option>
+                        <option value='csharp' className="bg-slate-800">C#</option>
+                        <option value='sql' className="bg-slate-800">SQL</option>
                       </select>
                     </div>
                     <button
@@ -512,7 +542,7 @@ function Dashboard() {
                     <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                     <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                     <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                    <span className="text-slate-400 text-sm ml-3 font-mono">main.{language === 'python' ? 'py' : language === 'javascript' ? 'js' : language === 'java' ? 'java' : language === 'cpp' ? 'cpp' : 'c'}</span>
+                    <span className="text-slate-400 text-sm ml-3 font-mono">main.{getFileExtension(language)}</span>
                     <div className="flex-1"></div>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <Cpu className="w-4 h-4" />

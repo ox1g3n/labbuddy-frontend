@@ -65,9 +65,18 @@ function SnippetModal({ isOpen, onClose, onSave, existingCode }) {
             <option value=''>Select Language</option>
             <option value='python'>Python</option>
             <option value='javascript'>JavaScript</option>
+            <option value='typescript'>TypeScript</option>
             <option value='java'>Java</option>
             <option value='cpp'>C++</option>
             <option value='c'>C</option>
+            <option value='go'>Go</option>
+            <option value='rust'>Rust</option>
+            <option value='php'>PHP</option>
+            <option value='ruby'>Ruby</option>
+            <option value='kotlin'>Kotlin</option>
+            <option value='swift'>Swift</option>
+            <option value='csharp'>C#</option>
+            <option value='sql'>SQL</option>
           </select>
         </div>
         <input
