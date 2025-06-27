@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 import { 
   MessageSquare, Users, Send, Wifi, WifiOff, 
-  Clock, Terminal, Zap
+  Clock, Terminal, Zap, Code2, Check
 } from 'lucide-react';
 
 const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL;
@@ -15,6 +16,7 @@ function GroupChat() {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
   const [room, setRoom] = useState(null);
+  const [pendingMessage, setPendingMessage] = useState(null);
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -87,6 +89,9 @@ function GroupChat() {
     });
 
     socket.on('newMessage', (message) => {
+      // Clear pending message when real message arrives
+      setPendingMessage(null);
+      
       setMessages((prevMessages) => {
         if (!prevMessages.some((m) => m._id === message._id)) {
           return [...prevMessages, message];
@@ -97,6 +102,8 @@ function GroupChat() {
 
     socket.on('messageError', (errorMessage) => {
       console.error('Message error:', errorMessage);
+      // Clear pending message on error
+      setPendingMessage(null);
       setError(`Send failed: ${errorMessage}`);
       setTimeout(() => setError(null), 5000);
     });
@@ -117,6 +124,16 @@ function GroupChat() {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (newMessage.trim() && socketRef.current && isConnected) {
+      // Show pending message immediately
+      const tempMessage = {
+        _id: 'temp-' + Date.now(),
+        content: newMessage,
+        user: { username: 'You' },
+        createdAt: new Date().toISOString(),
+        isPending: true
+      };
+      setPendingMessage(tempMessage);
+      
       socketRef.current.emit('sendMessage', { content: newMessage });
       setNewMessage('');
     } else if (!isConnected) {
@@ -275,7 +292,7 @@ function GroupChat() {
             </div>
           )}
           
-          {messages.length === 0 && !error && isConnected && (
+          {messages.length === 0 && !pendingMessage && !error && isConnected && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <MessageSquare className="w-16 h-16 text-purple-400 mb-4" />
               <p className='text-slate-300 text-lg font-medium'>No messages yet</p>
@@ -283,19 +300,20 @@ function GroupChat() {
             </div>
           )}
           
-          {messages.map((msg) => {
+          {[...messages, ...(pendingMessage ? [pendingMessage] : [])].map((msg, index) => {
             const isCurrentUser =
               msg.sender && localStorage.getItem('userId') === msg.sender._id;
+            const isPending = msg.isPending;
             return (
               <div
                 key={msg._id || Math.random()}
                 className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]`}
-                style={{ animationDelay: `${messages.indexOf(msg) * 0.1}s` }}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-lg border backdrop-blur-sm relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+                  className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-3 rounded-2xl shadow-lg border backdrop-blur-sm relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
                     isCurrentUser 
-                      ? 'bg-purple-600/90 text-white border-purple-400/30 hover:bg-purple-600' 
+                      ? `${isPending ? 'bg-purple-600/50 border-purple-400/50' : 'bg-purple-600/90 border-purple-400/30'} text-white hover:bg-purple-600` 
                       : 'bg-slate-800/80 text-slate-200 border-slate-600/30 hover:bg-slate-800/90'
                   }`}
                 >
@@ -311,18 +329,68 @@ function GroupChat() {
                       <p className={`text-xs font-semibold tracking-wide ${
                         isCurrentUser ? 'text-purple-100' : 'text-cyan-400'
                       }`}>
-                        {isCurrentUser ? 'You' : msg.sender?.name || 'Unknown'}
+                        {isPending ? 'You' : (isCurrentUser ? 'You' : msg.sender?.name || msg.user?.username || 'Unknown')}
                       </p>
+                      {isPending && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-1 h-1 bg-purple-300 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-purple-200 opacity-70">Sending...</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Message content with better typography */}
-                    <p className='text-sm break-words leading-relaxed font-medium'>{msg.content}</p>
+                    <div className='text-sm break-words leading-relaxed font-medium'>
+                      {msg.content.includes('```') || msg.content.includes('**') ? (
+                        <ReactMarkdown
+                          className='prose prose-invert prose-sm max-w-none'
+                          components={{
+                            code: ({ inline, children, ...props }) => {
+                              if (inline) {
+                                return (
+                                  <code className='bg-slate-700/60 px-2 py-1 rounded text-purple-300 font-mono text-xs border border-slate-600/40 inline-block max-w-full overflow-x-auto whitespace-nowrap' {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              }
+                              return (
+                                <div className="my-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Code2 className="w-3 h-3 text-purple-400" />
+                                    <span className="text-xs text-purple-300 font-medium">Code</span>
+                                  </div>
+                                  <pre className='bg-slate-900/80 p-4 rounded-lg overflow-x-auto border border-slate-600/40 max-w-full scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500'>
+                                    <code className='text-xs font-mono text-slate-200 whitespace-pre block min-w-max' {...props}>
+                                      {children}
+                                    </code>
+                                  </pre>
+                                </div>
+                              );
+                            },
+                            p: ({ children, ...props }) => (
+                              <p className='mb-2 last:mb-0 leading-relaxed break-words' {...props}>{children}</p>
+                            ),
+                            strong: ({ children, ...props }) => (
+                              <strong className='text-purple-200 font-semibold' {...props}>{children}</strong>
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <p>{msg.content}</p>
+                      )}
+                    </div>
 
                     {/* Refined timestamp */}
                     <div className="flex items-center justify-end gap-1.5 mt-3">
-                      <Clock className="w-3 h-3 opacity-40" />
+                      {isPending ? (
+                        <Clock className="w-3 h-3 opacity-40 animate-pulse" />
+                      ) : (
+                        <Check className="w-3 h-3 opacity-40 text-green-400" />
+                      )}
                       <p className='text-xs opacity-60 font-medium'>
-                        {formatTimestamp(msg.createdAt)}
+                        {isPending ? 'Sending...' : formatTimestamp(msg.createdAt)}
                       </p>
                     </div>
                   </div>

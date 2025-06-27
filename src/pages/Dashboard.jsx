@@ -12,9 +12,10 @@ import api from '../utils/api';
 import { logoutAllTabs } from '../utils/storageSync';
 
 function Dashboard() {
-  const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState('');
-  const [userInput, setUserInput] = useState('');
+  // Load persisted code from localStorage
+  const [language, setLanguage] = useState(() => localStorage.getItem('dashboard_language') || 'python');
+  const [code, setCode] = useState(() => localStorage.getItem('dashboard_code') || '');
+  const [userInput, setUserInput] = useState(() => localStorage.getItem('dashboard_input') || '');
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
   const [showSnippetModal, setShowSnippetModal] = useState(false);
@@ -29,6 +30,13 @@ function Dashboard() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiAction, setAiAction] = useState('suggestion');
   const [aiResponse, setAiResponse] = useState('');
+
+  // AI Copilot states
+  const [aiCopilotEnabled, setAiCopilotEnabled] = useState(true);
+  const [showInlineSuggestion, setShowInlineSuggestion] = useState(false);
+  const [inlineSuggestion, setInlineSuggestion] = useState('');
+  const [suggestionPosition, setSuggestionPosition] = useState(null);
+  const [editorRef, setEditorRef] = useState(null);
 
   // Fetch code templates
   const fetchTemplates = useCallback(async () => {
@@ -242,6 +250,90 @@ function Dashboard() {
     }
   };
 
+  // Persist code, language, and input to localStorage
+  useEffect(() => {
+    localStorage.setItem('dashboard_code', code);
+  }, [code]);
+
+  useEffect(() => {
+    localStorage.setItem('dashboard_language', language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('dashboard_input', userInput);
+  }, [userInput]);
+
+  // AI Copilot functions
+  const getAiCodeSuggestion = async (currentCode, cursorPosition) => {
+    if (!aiCopilotEnabled || !currentCode.trim()) return null;
+    
+    try {
+      const response = await api.post('api/gemini/suggestions', { 
+        code: currentCode,
+        context: `Cursor position: ${cursorPosition}. Provide a brief, contextual code suggestion.`
+      });
+      return response.data.response;
+    } catch (error) {
+      console.error('Error getting AI suggestion:', error);
+      return null;
+    }
+  };
+
+  const handleEditorMount = (editor, monaco) => {
+    setEditorRef(editor);
+    
+    // Add AI Copilot trigger on Ctrl+Space
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, async () => {
+      const position = editor.getPosition();
+      const model = editor.getModel();
+      const currentCode = model.getValue();
+      
+      if (currentCode.trim()) {
+        const suggestion = await getAiCodeSuggestion(currentCode, position);
+        if (suggestion) {
+          setInlineSuggestion(suggestion);
+          setSuggestionPosition(position);
+          setShowInlineSuggestion(true);
+          toast.success('AI suggestion ready! Press Tab to accept.');
+        }
+      }
+    });
+
+    // Add command to accept AI suggestion
+    editor.addCommand(monaco.KeyCode.Tab, () => {
+      if (showInlineSuggestion && inlineSuggestion) {
+        const position = editor.getPosition();
+        const model = editor.getModel();
+        
+        // Insert suggestion at current position
+        model.pushEditOperations([], [{
+          range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+          text: inlineSuggestion
+        }], () => null);
+        
+        // Clear suggestion
+        setShowInlineSuggestion(false);
+        setInlineSuggestion('');
+        setSuggestionPosition(null);
+        toast.success('AI suggestion applied!');
+        return true; // Prevent default Tab behavior
+      }
+      return false; // Allow default Tab behavior
+    });
+
+    // Add command to reject AI suggestion
+    editor.addCommand(monaco.KeyCode.Escape, () => {
+      if (showInlineSuggestion) {
+        setShowInlineSuggestion(false);
+        setInlineSuggestion('');
+        setSuggestionPosition(null);
+        toast.info('AI suggestion dismissed');
+        return true;
+      }
+      return false;
+    });
+  };
+
   return (
     <div className='min-h-screen bg-slate-900 overflow-hidden relative'>
       {/* Animated Background Pattern */}
@@ -396,6 +488,18 @@ function Dashboard() {
                         <option value='c' className="bg-slate-800">C</option>
                       </select>
                     </div>
+                    <button
+                      onClick={() => setAiCopilotEnabled(!aiCopilotEnabled)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-300 ${
+                        aiCopilotEnabled 
+                          ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' 
+                          : 'bg-white/5 border-white/10 text-slate-400'
+                      }`}
+                    >
+                      <Bot className="w-4 h-4" />
+                      <span className="text-sm font-medium">AI Copilot</span>
+                      {aiCopilotEnabled && <Sparkles className="w-3 h-3 animate-pulse" />}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -403,7 +507,7 @@ function Dashboard() {
               {/* Code Editor Section */}
               <div className='flex-1 flex flex-col min-h-0 p-6 gap-4 overflow-y-auto'>
                 {/* Editor */}
-                <div className='flex-1 min-h-[400px] max-h-[60vh] bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden'>
+                <div className='flex-1 min-h-[500px] max-h-[70vh] bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden'>
                   <div className="flex items-center gap-2 p-4 border-b border-white/10">
                     <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                     <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
@@ -413,9 +517,15 @@ function Dashboard() {
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <Cpu className="w-4 h-4" />
                       <span>Ready to execute</span>
+                      {aiCopilotEnabled && (
+                        <div className="flex items-center gap-1 text-purple-400">
+                          <Bot className="w-3 h-3" />
+                          <span>Ctrl+Space for AI help</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="h-[calc(100%-4rem)] overflow-scroll">
+                  <div className="h-[calc(100%-4rem)] overflow-scroll relative">
                     <Editor
                       height='100%'
                       language={language}
@@ -441,7 +551,27 @@ function Dashboard() {
                         wordWrap: 'on',
                         overviewRulerLanes: 0,
                       }}
+                      onMount={handleEditorMount}
                     />
+                    
+                    {/* AI Suggestion Overlay */}
+                    {showInlineSuggestion && inlineSuggestion && (
+                      <div className="absolute top-4 right-4 bg-purple-900/90 backdrop-blur-sm border border-purple-500/50 rounded-lg p-3 max-w-sm z-10 shadow-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Bot className="w-4 h-4 text-purple-400" />
+                          <span className="text-sm font-medium text-purple-300">AI Suggestion</span>
+                        </div>
+                        <div className="text-xs text-slate-300 mb-3 font-mono bg-slate-800/50 p-2 rounded">
+                          {inlineSuggestion.substring(0, 100)}
+                          {inlineSuggestion.length > 100 && '...'}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <span>Press <kbd className="bg-slate-700 px-1 rounded">Tab</kbd> to accept</span>
+                          <span>•</span>
+                          <span><kbd className="bg-slate-700 px-1 rounded">Esc</kbd> to dismiss</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
